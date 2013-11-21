@@ -7,19 +7,23 @@ module CodeWeb
     # Map<String,Array<MethodCall>>
     attr_accessor :method_calls
 
+    # only store the information on these methods
+    attr_accessor :method_regex
+
     def initialize
       @cur_method=[]
       @parser = RubyParser.new
       @indent = 0
       @method_calls={}
+      @method_regex = //
     end
 
     def traverse(ast)
       puts "#{spaces}||#{collapse_ast(ast)}||" if $verbose
-      case ast.first
-      when :block #statements[]
+      case ast.node_type
+      when :block, :if #statements[]
         traverse_nodes(ast, 1..-1)
-      when :module #name, class[]
+      when :module, :cdecl #name, class[]
         in_context ast[1] do
           traverse_nodes(ast, 2..-1)
         end
@@ -40,19 +44,17 @@ module CodeWeb
         in_context 'yield', true do
           traverse(ast[3])
         end
-      when :if #call[], call[], call[]
-        in_context 'if', true do
-          traverse_nodes(ast, 1..-1)
-        end
       when :call # object, statement? || const symbol, args
         handle_method_call(ast[1..-1])
         ast[2..-1].each do |node|
           traverse(node) if node.is_a?(Array) && [:call].include?(node[0])
         end
-      when :lit, :lvar, :const, :str, :nil #not used, but remove false errors
+      when :lit, :lvar, :const, :str, :nil
+        #not used, but remove false errors
+      when :hash
+        traverse_nodes(ast, 1..-1)
       else
-        #STDERR.puts "*** unknown node_type #{ast.first}"
-        STDERR.puts "#{src}\n  unknown node: #{collapse_ast(ast)}"
+        STDERR.puts "#{src}\n  unknown node: #{ast.is_a?(Sexp) ? ast.node_type : 'non-s-type'} #{collapse_ast(ast)}"
       end
     end
 
@@ -75,7 +77,7 @@ module CodeWeb
       method_name = method_name_from_ast(method_ast[0..1])
       args = method_ast[2..-1].map {|arg| collapse_ast(arg)}
 
-      add_method(method_name, args, is_yield)
+      add_method(method_name, args, is_yield) if method_name =~ method_regex
 
       print "#{spaces}#{method_name}(#{collapse_ast(args.first)}" if $debug
       if args.length > 1
@@ -96,8 +98,8 @@ module CodeWeb
     # this one creates the true classes, not the string versions
     # (so don't add double quotes, or do 'nil')
     def method_node_from_ast(ast)
-      if ast.is_a?(Array)
-        case ast[0]
+      if ast.is_a?(Sexp)
+        case ast.node_type
         when :hash
           ret = {}
           ast[1..-1].each_slice(2) do |name, value|
@@ -105,18 +107,13 @@ module CodeWeb
           end
           ret
         when :array
-          if ast[0] == :call
-            "#{ast[1]}()"
-          else
-            ast[1..-1].map {|node| method_node_from_ast(node)}
-          end
+          ast[1..-1].map {|node| method_node_from_ast(node)}
         when :lit, :lvar, :const, :str, :nil
           ast[1]
         when :call
           "#{method_name_from_ast(ast[1..2])}#{'(...)' if ast.length > 3}"
         else
-          binding.pry
-          "#{ast[0]}[]"
+          "#{ast.node_type}[]"
         end
       elsif ast.nil?
         nil
@@ -126,8 +123,8 @@ module CodeWeb
     end
 
     def collapse_ast(ast, separator=", ", max=1)
-      if ast.is_a?(Array)
-        case ast[0]
+      if ast.is_a?(Sexp)
+        case ast.node_type
         when :hash
           ret = {}
           ast[1..-1].each_slice(2) do |name, value|
@@ -147,7 +144,7 @@ module CodeWeb
           if max > 0
             ast.map {|node| collapse_ast(node, separator, max-1)}.compact.join(separator)
           else
-            "#{ast[0]}[]"
+            "#{ast.node_type}[]"
           end
         end        
       elsif ast.nil?

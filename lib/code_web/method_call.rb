@@ -10,11 +10,38 @@ module CodeWeb
     # is this calling a yield block
     attr_accessor :is_yielding
 
-    def initialize(src, name, args, is_yielding=false)
+    def initialize(src=nil, name=nil, args=[], is_yielding=false)
       @src = src
       @name = name
       @args = args
       @is_yielding = is_yielding
+    end
+
+    def args?
+      args.nil? || args.empty?
+    end
+
+    def signature
+      "#{method_name}(#{sorted_args})"
+    end
+
+    def method_name
+      Array(name).compact.join(".")
+    end
+
+    def sorted_args
+      @args.map {|arg| sorted_hash(arg)}.join(", ")
+    end
+
+    def sorted_hash(args)
+      case args
+      when Hash
+        args.sort_by {|n,v| n }.map {|n,v| "#{n}:#{sorted_hash(v)}"}.join(", ")
+      when Array
+        "[#{args.map {|arg| sorted_hash(arg)}.join(", ")}]"
+      else
+        "#{args}"
+      end
     end
 
     def ==(other)

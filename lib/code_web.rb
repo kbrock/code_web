@@ -1,5 +1,7 @@
 require "code_web/version"
 
 module CodeWeb
-  # Your code goes here...
 end
+
+require 'code_web/method_call'
+require 'code_web/code_parser'

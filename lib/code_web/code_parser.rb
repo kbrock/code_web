@@ -1,5 +1,8 @@
 require 'ruby_parser'
 
+#$verbose=true
+#$debug=true
+
 module CodeWeb
   class CodeParser
     SPACES = (0..10).map { |i| "  " * i}
@@ -18,10 +21,18 @@ module CodeWeb
       @method_regex = //
     end
 
-    def traverse(ast)
+    def traverse(ast, has_yield=false)
       puts "#{spaces}||#{collapse_ast(ast)}||" if $verbose
+      puts src if ast.nil?
       case ast.node_type
-      when :block, :if #statements[]
+      #dstr = define string ("abc#{here}"),
+      #evstr evaluate string (#{HERE})
+      #attrasgn = attribute assignment
+      when :block, :if, :ensure, :rescue, :case, :when, :begin,
+           :while, :until, :defined, :resbody, :match3, :dot2,
+           :dstr, :evstr, :hash, :array, :return, :and, :or,
+           :next, :to_ary, :splat, :block_pass, :until, :yield, :break,
+           /asgn/, :ivar, :arglist, :args #statements[]
         traverse_nodes(ast, 1..-1)
       when :module, :cdecl #name, class[]
         in_context ast[1] do
@@ -37,32 +48,35 @@ module CodeWeb
         end
       when :defn #name, args[], call[]
         in_context ast[1], true, true do
-          traverse_nodes(ast, 3..-1)
+          traverse_nodes(ast, 2..-1)
         end
       when :iter #call[], yield_args[], yield_{block|call}[]
-        traverse(ast[1])
+        traverse(ast[1], :has_yield)
         in_context 'yield', true do
-          traverse(ast[3])
+          traverse(ast[3]) if ast[3] #some blocks are empty
         end
       when :call # object, statement? || const symbol, args
-        handle_method_call(ast[1..-1])
-        ast[2..-1].each do |node|
-          traverse(node) if node.is_a?(Array) && [:call].include?(node[0])
-        end
-      when :lit, :lvar, :const, :str, :nil
+        handle_method_call(ast, has_yield)
+        traverse_nodes(ast,1..-1)
+      when :lit, :lvar, :const, :str, :nil, :gvar,
+           :true, :false, :colon2, :self, :next, :alias,
+           :nth_ref
         #not used, but remove false errors
-      when :hash
-        traverse_nodes(ast, 1..-1)
       else
-        STDERR.puts "#{src}\n  unknown node: #{ast.is_a?(Sexp) ? ast.node_type : 'non-s-type'} #{collapse_ast(ast)}"
+        STDERR.puts "#{src}\n  unknown node: #{ast.node_type} #{collapse_ast(ast)}"
+        #puts ast
+        binding.pry
+        raise "error"
       end
     end
 
     def traverse_nodes(ast, *ranges)
+      ranges = [0..-1] if ranges.empty?
       ranges.each do |range|
-        #range = range..range unless range.is_a?(Range)
         ast[range].each do |node|
-          traverse(node) if node.is_a?(Array)
+          should_call = node.is_a?(Sexp)
+          binding.pry if should_call && node.nil?
+          traverse(node) if should_call
         end
       end
     end
@@ -73,19 +87,13 @@ module CodeWeb
       @method_calls[method_name] << CodeWeb::MethodCall.new(@cur_method.dup, method_name, args, is_yield)
     end
 
-    def handle_method_call(method_ast, is_yield=false)
-      method_name = method_name_from_ast(method_ast[0..1])
-      args = method_ast[2..-1].map {|arg| collapse_ast(arg)}
+    def handle_method_call(ast, is_yield=false)
+      method_name = method_name_from_ast(ast[1..2])
+      args = ast[3..-1].map {|arg| collapse_ast(arg)}
 
       add_method(method_name, args, is_yield) if method_name =~ method_regex
 
-      print "#{spaces}#{method_name}(#{collapse_ast(args.first)}" if $debug
-      if args.length > 1
-        args[1..-1].each do | arg |
-          print ", #{collapse_ast(arg)}"  if $debug
-        end
-      end
-      print ")#{" do" if is_yield}\n" if $debug
+      puts "#{spaces}#{method_name}(#{args.map{|arg|arg.inspect}.join(", ")})#{" do" if is_yield}" if $debug
     end
 
     def method_name_from_ast(ast)
@@ -100,18 +108,20 @@ module CodeWeb
     def method_node_from_ast(ast)
       if ast.is_a?(Sexp)
         case ast.node_type
-        when :hash
-          ret = {}
-          ast[1..-1].each_slice(2) do |name, value|
-            ret[method_node_from_ast(name)] = method_node_from_ast(value)
-          end
-          ret
+        when :hash #name, value, name, value, ...
+          Hash[*ast[1..-1].map {|i| method_node_from_ast(i)}]
         when :array
           ast[1..-1].map {|node| method_node_from_ast(node)}
-        when :lit, :lvar, :const, :str, :nil
+        when :lit, :lvar, :const, :str
           ast[1]
+        when :true, :false, :self, :nil
+          ast[0]
         when :call
           "#{method_name_from_ast(ast[1..2])}#{'(...)' if ast.length > 3}"
+        when :colon2
+          "#{method_name_from_ast(ast[1..-1])}"
+        when :dot2
+          "#{method_node_from_ast(ast[1])}..#{method_node_from_ast(ast[2])}"
         else
           "#{ast.node_type}[]"
         end
@@ -125,24 +135,22 @@ module CodeWeb
     def collapse_ast(ast, separator=", ", max=1)
       if ast.is_a?(Sexp)
         case ast.node_type
-        when :hash
-          ret = {}
-          ast[1..-1].each_slice(2) do |name, value|
-            ret[method_node_from_ast(name)] = method_node_from_ast(value)
-          end
-          ret
+        when :hash #name, value, name, value, ...
+          Hash[*ast[1..-1].map {|i| method_node_from_ast(i)}]
         when :array
           ast[1..-1].map {|node| method_node_from_ast(node)}
         when :str
           "\"#{ast[1]}\""
         when :lit, :lvar, :const
           ast[1]
+        when :true, :false, :self, :nil
+          ast[0]
         when :call
           #simplify sub calls for now
           "#{method_name_from_ast(ast[1..2])}#{'(...)' if ast.length > 3}"
         else
           if max > 0
-            ast.map {|node| collapse_ast(node, separator, max-1)}.compact.join(separator)
+            ast.map {|node| collapse_ast(node, separator, max-1)}
           else
             "#{ast.node_type}[]"
           end

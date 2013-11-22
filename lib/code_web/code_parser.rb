@@ -29,39 +29,39 @@ module CodeWeb
       #evstr evaluate string (#{HERE})
       #attrasgn = attribute assignment
       when :block, :if, :ensure, :rescue, :case, :when, :begin,
-           :while, :until, :defined, :resbody, :match3, :dot2,
-           :dstr, :evstr, :hash, :array, :return, :and, :or,
-           :next, :to_ary, :splat, :block_pass, :until, :yield, :break,
-           /asgn/, :ivar, :arglist, :args #statements[]
+           :while, :until, :defined, :resbody, :match2, :match3, :dot2,
+           :dstr, :evstr, :dsym, :dregx, :hash, :array, :return, :and, :or,
+           :next, :to_ary, :splat, :block_pass, :until, :yield,
+           /asgn/, :ivar, :arglist, :args, :zsuper, :not, #statements[]
+           :super, :xstr, :for, :until, :dxstr, 
+      #these end up being no-ops:
+           :lit, :lvar, :const, :str, :nil, :gvar,
+           :true, :false, :colon2, :colon3, :self, :next, :alias,
+           :nth_ref, :sclass, :cvdecl, :break, :retry,
+      #random
+           :svalue, :cvar
         traverse_nodes(ast, 1..-1)
-      when :module, :cdecl #name, class[]
+      when :module, :cdecl #name, statements[]
         in_context ast[1] do
           traverse_nodes(ast, 2..-1)
         end
-      when :class #name, parent, statements[]
+      when :class, #name, parent, statements[]
+           :defn #name, args[], call[]
         in_context ast[1], true, true do
-          traverse_nodes(ast, 3..-1)
+          traverse_nodes(ast, 2..-1)
         end
       when :defs #self[], name, args[], call[]
         in_context ast[2], true, true do
-          traverse_nodes(ast, 4..-1)
-        end
-      when :defn #name, args[], call[]
-        in_context ast[1], true, true do
           traverse_nodes(ast, 2..-1)
         end
       when :iter #call[], yield_args[], yield_{block|call}[]
         traverse(ast[1], :has_yield)
         in_context 'yield', true do
-          traverse(ast[3]) if ast[3] #some blocks are empty
+          traverse_nodes(ast, 2..-1)
         end
       when :call # object, statement? || const symbol, args
         handle_method_call(ast, has_yield)
-        traverse_nodes(ast,1..-1)
-      when :lit, :lvar, :const, :str, :nil, :gvar,
-           :true, :false, :colon2, :self, :next, :alias,
-           :nth_ref
-        #not used, but remove false errors
+        traverse_nodes(ast, 1..-1)
       else
         STDERR.puts "#{src}\n  unknown node: #{ast.node_type} #{collapse_ast(ast)}"
         #puts ast
@@ -114,14 +114,16 @@ module CodeWeb
           ast[1..-1].map {|node| method_node_from_ast(node)}
         when :lit, :lvar, :const, :str
           ast[1]
-        when :true, :false, :self, :nil
+        when :true, :false, :self, :nil, :cvar
           ast[0]
         when :call
           "#{method_name_from_ast(ast[1..2])}#{'(...)' if ast.length > 3}"
-        when :colon2
+        when :colon2 #TODO: fix
           "#{method_name_from_ast(ast[1..-1])}"
         when :dot2
           "#{method_node_from_ast(ast[1])}..#{method_node_from_ast(ast[2])}"
+        when :colon3
+          "::#{method_node_from_ast(ast[1..-1])}"
         else
           "#{ast.node_type}[]"
         end
@@ -148,6 +150,12 @@ module CodeWeb
         when :call
           #simplify sub calls for now
           "#{method_name_from_ast(ast[1..2])}#{'(...)' if ast.length > 3}"
+        when :colon2 #TODO: FIX?
+          "#{method_name_from_ast(ast[1..-1])}"
+        when :dot2 #NOT tested
+          "#{method_node_from_ast(ast[1])}..#{method_node_from_ast(ast[2])}"
+        when :colon3 #NOT tested
+          "::#{method_node_from_ast(ast[1..-1])}"
         else
           if max > 0
             ast.map {|node| collapse_ast(node, separator, max-1)}

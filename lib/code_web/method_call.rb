@@ -14,7 +14,7 @@ module CodeWeb
       @src = src
       @name = name
       @args = args
-      @is_yielding = is_yielding
+      @is_yielding = !! is_yielding
     end
 
     def args?

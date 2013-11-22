@@ -84,10 +84,10 @@ describe CodeWeb::CodeParser do
     it 'should support yield blocks' do
       parse "a(5) { |x| b(x) }"
       expect(method_calls('a')).to eq([
-        meth('a',[5])
+        meth('a',[5], true)
       ])
       expect(method_calls('b')).to eq([
-        meth('b',[:x])
+        meth('b',[:x], false)
       ])
     end
 

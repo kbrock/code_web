@@ -22,7 +22,7 @@ module CodeWeb
     end
 
     def traverse(ast, has_yield=false)
-      puts "#{spaces}||#{collapse_ast(ast)}||" if $verbose
+      puts "#{spaces}||#{collapse_ast(ast,1)}||" if $verbose
       puts src if ast.nil?
       case ast.node_type
       #dstr = define string ("abc#{here}"),
@@ -63,7 +63,7 @@ module CodeWeb
         handle_method_call(ast, has_yield)
         traverse_nodes(ast, 1..-1)
       else
-        STDERR.puts "#{src}\n  unknown node: #{ast.node_type} #{collapse_ast(ast)}"
+        STDERR.puts "#{src}\n  unknown node: #{ast.node_type} #{collapse_ast(ast,1)}"
         if defined?(Pry)
           binding.pry
         end
@@ -90,7 +90,7 @@ module CodeWeb
 
     def handle_method_call(ast, is_yield=false)
       method_name = method_name_from_ast(ast[1..2])
-      args = ast[3..-1].map {|arg| collapse_ast(arg)}
+      args = ast[3..-1].map {|arg| collapse_ast(arg,1)}
 
       add_method(method_name, args, is_yield) if method_name =~ method_regex
 
@@ -99,75 +99,43 @@ module CodeWeb
 
     def method_name_from_ast(ast)
       ast.map { |node|
-        method_node_from_ast(node)
+        collapse_ast(node)
       }.compact.join(".")
     end
 
     #TODO: add collapse_ast
     # this one creates the true classes, not the string versions
     # (so don't add double quotes, or do 'nil')
-    def method_node_from_ast(ast)
+    def collapse_ast(ast, max=20)
       if ast.is_a?(Sexp)
         case ast.node_type
         when :hash #name, value, name, value, ...
-          Hash[*ast[1..-1].map {|i| method_node_from_ast(i)}]
+          Hash[*ast[1..-1].map {|i| collapse_ast(i)}]
         when :array
-          ast[1..-1].map {|node| method_node_from_ast(node)}
-        when :lit, :lvar, :const, :str
+          ast[1..-1].map {|node| collapse_ast(node)}
+        when :lit, :lvar, :const, :str, :ivar, :cvar
           ast[1]
-        when :true, :false, :self, :nil, :cvar
+        when :true, :false, :self, :nil
           ast[0]
         when :call
           "#{method_name_from_ast(ast[1..2])}#{'(...)' if ast.length > 3}"
         when :colon2 #TODO: fix
           "#{method_name_from_ast(ast[1..-1])}"
         when :dot2
-          "#{method_node_from_ast(ast[1])}..#{method_node_from_ast(ast[2])}"
+          "#{collapse_ast(ast[1])}..#{collapse_ast(ast[2])}"
         when :colon3
-          "::#{method_node_from_ast(ast[1..-1])}"
+          "::#{collapse_ast(ast[1..-1])}"
         else
-          "#{ast.node_type}[]"
+          if max > 0
+            ast.map {|node| collapse_ast(node, max-1)}
+          else
+            "#{ast.node_type}[]"
+          end
         end
       elsif ast.nil?
         nil
       else
         ast
-      end
-    end
-
-    def collapse_ast(ast, separator=", ", max=1)
-      if ast.is_a?(Sexp)
-        case ast.node_type
-        when :hash #name, value, name, value, ...
-          Hash[*ast[1..-1].map {|i| method_node_from_ast(i)}]
-        when :array
-          ast[1..-1].map {|node| method_node_from_ast(node)}
-        when :str
-          "\"#{ast[1]}\""
-        when :lit, :lvar, :const
-          ast[1]
-        when :true, :false, :self, :nil
-          ast[0]
-        when :call
-          #simplify sub calls for now
-          "#{method_name_from_ast(ast[1..2])}#{'(...)' if ast.length > 3}"
-        when :colon2 #TODO: FIX?
-          "#{method_name_from_ast(ast[1..-1])}"
-        when :dot2 #NOT tested
-          "#{method_node_from_ast(ast[1])}..#{method_node_from_ast(ast[2])}"
-        when :colon3 #NOT tested
-          "::#{method_node_from_ast(ast[1..-1])}"
-        else
-          if max > 0
-            ast.map {|node| collapse_ast(node, separator, max-1)}
-          else
-            "#{ast.node_type}[]"
-          end
-        end        
-      elsif ast.nil?
-        "nil"
-      else
-        "#{ast}"
       end
     end
 

@@ -13,7 +13,7 @@ module CodeWeb
         end
       end
 
-      ::CodeWeb::TextReport.new(code_parser).report
+      ::CodeWeb::HtmlReport.new(code_parser, /miq_queue.rb$/).report
     end
   end
 end

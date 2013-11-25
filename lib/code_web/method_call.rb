@@ -7,6 +7,7 @@ module CodeWeb
     attr_accessor :name
     # what arguments are passed in
     attr_accessor :args
+    def arguments ; args ; end
     # is this calling a yield block
     attr_accessor :is_yielding
 

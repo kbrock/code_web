@@ -13,7 +13,7 @@ module CodeWeb
     def initialize(src=nil, name=nil, args=[], is_yielding=false)
       @src = src
       @name = name
-      @args = args
+      @args = sorted_hash(args)
       @is_yielding = !! is_yielding
     end
 
@@ -21,26 +21,39 @@ module CodeWeb
       args.nil? || args.empty?
     end
 
+    def method_types
+      args.map { |arg|
+        case arg
+        when Array
+          '[]'
+        when Hash
+          '{}'
+        else
+          'str'
+        end
+      }
+    end
+
     def signature
-      "#{method_name}(#{sorted_args})"
+      "#{method_name}(#{sorted_args.to_s})"
     end
 
     def method_name
       Array(name).compact.join(".")
     end
 
-    def sorted_args
-      @args.map {|arg| sorted_hash(arg)}.join(", ")
+    def sorted_args(hash=@args)
+      hash.map {|arg| sorted_hash(arg) }.join(", ")
     end
 
     def sorted_hash(args)
       case args
       when Hash
-        args.sort_by {|n,v| n }.map {|n,v| "#{n}:#{sorted_hash(v)}"}.join(", ")
+        args.each_pair.sort_by {|n,v| n }.inject({}) {|h, (n,v)| h[n]=sorted_hash(v); h}
       when Array
-        "[#{args.map {|arg| sorted_hash(arg)}.join(", ")}]"
+        args
       else
-        "#{args}"
+        args
       end
     end
 

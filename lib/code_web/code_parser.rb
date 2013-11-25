@@ -29,7 +29,7 @@ module CodeWeb
       #evstr evaluate string (#{HERE})
       #attrasgn = attribute assignment
       when :block, :if, :ensure, :rescue, :case, :when, :begin,
-           :while, :until, :defined, :resbody, :match2, :match3, :dot2,
+           :while, :until, :defined, :resbody, :match2, :match3, :dot2, :dot3,
            :dstr, :evstr, :dsym, :dregx, :hash, :array, :return, :and, :or,
            :next, :to_ary, :splat, :block_pass, :until, :yield,
            /asgn/, :ivar, :arglist, :args, :zsuper, :not, #statements[]
@@ -64,8 +64,9 @@ module CodeWeb
         traverse_nodes(ast, 1..-1)
       else
         STDERR.puts "#{src}\n  unknown node: #{ast.node_type} #{collapse_ast(ast)}"
-        #puts ast
-        binding.pry
+        if defined?(Pry)
+          binding.pry
+        end
         raise "error"
       end
     end

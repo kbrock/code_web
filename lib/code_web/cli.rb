@@ -13,13 +13,7 @@ module CodeWeb
         end
       end
 
-      code_parser.method_calls.each_pair  do |name, methods|
-        puts "---- #{name} ----"
-        methods.each do |method|
-          puts method.signature
-        end
-        puts
-      end
+      ::CodeWeb::TextReport.new(code_parser).report
     end
   end
 end

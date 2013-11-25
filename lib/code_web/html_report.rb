@@ -2,23 +2,28 @@ require 'set'
 
 module CodeWeb
   class HtmlReport
-    # @!attribute :code_parser [r]
-    #   code parser that has all the methods
-    #   @return [CodeParser]
-    attr_accessor :code_parser
+    # @!attribute :method_calls [r]
+    #   list of all the method_Calls
+    #   @return [Array<MethodCall>]
+    attr_accessor :method_calls
     attr_accessor :main_file
-    def initialize(code_parser, main_file)
-      @code_parser = code_parser
+    def initialize(method_calls, main_file)
+      @method_calls = method_calls
       @main_file = main_file || /$^/ #by default don't match
     end
     
     def report
       puts "<html>"
-      puts "<head></head>"
+      puts "<head><style>"
+      puts "table {border-collapse:collapse;}"
+      puts "table, td, th { border:1px solid black;  }"
+      puts ".primary { font-text: bold}"
+      puts "</style>"
+      puts "</head>"
       puts "<body>"
 
       # all methods references
-      code_parser.method_calls.each_pair do |name, methods|
+      method_calls.each_pair do |name, methods|
         puts "<h2>#{name}</h2>"
         method_groupings = methods.group_by {|m| m.method_types }
         show_signatures  = method_groupings.count != 1
@@ -72,7 +77,7 @@ module CodeWeb
     private
 
     def simplified_argument(obj)
-      obj.nil? ? nil : obj.to_s[0..10]
+      obj.nil? ? nil : obj.to_s[0..15]
     end
     # @param methods [Array<Method>] array of methods (with a hash first argument)
     # @return [Array<String>] list of all keys for all hashes
@@ -82,7 +87,7 @@ module CodeWeb
 
     def method_link(m, count=nil)
       name = count ? "[#{count}]" : m.signature
-      "<a href='#{m.src.first}'>#{"*" if m.src.first =~ main_file}#{name}</a>"
+      "<a href='#{m.src.first}'#{" class='primary'" if m.src.first =~ main_file}>#{name}</a>"
     end
   end
 end

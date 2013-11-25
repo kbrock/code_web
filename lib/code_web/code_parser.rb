@@ -7,18 +7,15 @@ module CodeWeb
   class CodeParser
     SPACES = (0..10).map { |i| "  " * i}
 
-    # Map<String,Array<MethodCall>>
-    attr_accessor :method_calls
-
-    # only store the information on these methods
-    attr_accessor :method_regex
+    attr_accessor :method_cache
+    def method_regex=(regex) ; @method_cache.method_regex= regex ; end
+    def method_calls ; @method_cache.method_calls ; end
 
     def initialize
       @cur_method=[]
       @parser = RubyParser.new
       @indent = 0
-      @method_calls={}
-      @method_regex = //
+      @method_cache = CodeWeb::MethodCache.new
     end
 
     def traverse(ast, has_yield=false)
@@ -76,23 +73,16 @@ module CodeWeb
       ranges.each do |range|
         ast[range].each do |node|
           should_call = node.is_a?(Sexp)
-          binding.pry if should_call && node.nil?
           traverse(node) if should_call
         end
       end
-    end
-
-
-    def add_method(method_name, args=[], is_yield=false)
-      @method_calls[method_name] ||= []
-      @method_calls[method_name] << CodeWeb::MethodCall.new(@cur_method.dup, method_name, args, is_yield)
     end
 
     def handle_method_call(ast, is_yield=false)
       method_name = method_name_from_ast(ast[1..2])
       args = ast[3..-1].map {|arg| collapse_ast(arg,1)}
 
-      add_method(method_name, args, is_yield) if method_name =~ method_regex
+      method_cache.add_method(@cur_method.dup, method_name, args, is_yield)
 
       puts "#{spaces}#{method_name}(#{args.map{|arg|arg.inspect}.join(", ")})#{" do" if is_yield}" if $debug
     end

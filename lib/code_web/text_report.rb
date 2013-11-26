@@ -4,24 +4,32 @@ module CodeWeb
     #   list of all the method_Calls
     #   @return [Array<MethodCall>]
     attr_accessor :method_calls
-    def initialize(method_calls, main_file)
+
+    # @!attribute :main_file [rw]
+    #   regex for the primary file (Defining the method we are searching for)
+    #   so references can look different
+    #   @return [Regexp] regex expressing name of main file
+    attr_accessor :main_file
+
+    def initialize(method_calls, main_file=/$^/, out=STDOUT)
       @method_calls = method_calls
-      @main_file = main_file || /$^/ #by default don't match
+      @main_file = main_file
+      @out = out
     end
     
     def report
       method_calls.each_pair do |name, methods|
-        puts "---- #{name} ----"
+        @out.puts "---- #{name} ----"
         method_groupings = methods.group_by {|m| m.method_types }
         show_signatures  = method_groupings.count != 1
 
         method_groupings.sort_by {|t,s| t}.each do |(method_types, methods_with_signature)|
-          puts "-------- #{method_types}" if show_signatures
+          @out.puts "-------- #{method_types}" if show_signatures
           methods_with_signature.sort_by {|m| m.signature }.each do |method|
-            puts method.signature
+            @out.puts method.signature
           end
         end
-        puts
+        @out.puts
       end
     end
   end

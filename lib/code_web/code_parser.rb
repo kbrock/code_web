@@ -8,6 +8,8 @@ module CodeWeb
     SPACES = (0..10).map { |i| "  " * i}
 
     attr_accessor :method_cache
+    attr_accessor :file_count
+    attr_accessor :exit_on_error
     def method_regex=(regex) ; @method_cache.method_regex= regex ; end
     def method_calls ; @method_cache.method_calls ; end
 
@@ -15,6 +17,8 @@ module CodeWeb
       @cur_method=[]
       @parser = RubyParser.new
       @indent = 0
+      @file_count = 0
+      @exit_on_error = true
       @method_cache = CodeWeb::MethodCache.new
     end
 
@@ -32,9 +36,9 @@ module CodeWeb
            /asgn/, :ivar, :arglist, :args, :zsuper, :not, #statements[]
            :super, :xstr, :for, :until, :dxstr, 
       #these end up being no-ops:
-           :lit, :lvar, :const, :str, :nil, :gvar,
+           :lit, :lvar, :const, :str, :nil, :gvar, :back_ref,
            :true, :false, :colon2, :colon3, :self, :next, :alias,
-           :nth_ref, :sclass, :cvdecl, :break, :retry,
+           :nth_ref, :sclass, :cvdecl, :break, :retry, :undef,
       #random
            :svalue, :cvar
         traverse_nodes(ast, 1..-1)
@@ -61,10 +65,11 @@ module CodeWeb
         traverse_nodes(ast, 1..-1)
       else
         STDERR.puts "#{src}\n  unknown node: #{ast.node_type} #{collapse_ast(ast,1)}"
-        if defined?(Pry)
-          binding.pry
+        if exit_on_error
+          binding.pry if defined?(Pry)
+          raise "error"
         end
-        raise "error"
+        traverse_nodes(ast, 1..-1)
       end
     end
 
@@ -115,6 +120,7 @@ module CodeWeb
           "#{collapse_ast(ast[1])}..#{collapse_ast(ast[2])}"
         when :colon3
           "::#{collapse_ast(ast[1..-1])}"
+        #backref?
         else
           if max > 0
             ast.map {|node| collapse_ast(node, max-1)}
@@ -130,6 +136,7 @@ module CodeWeb
     end
 
     def parse(file_name, file_data=nil, required_string=nil)
+      @file_count += 1
       file_data ||= File.binread(file_name)
       if required_string.nil? || file_date.include?(required_string)
         in_context file_name do

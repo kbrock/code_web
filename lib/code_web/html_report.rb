@@ -43,18 +43,20 @@ module CodeWeb
             #@out.puts "<caption>#{method_types}</caption>" if show_signatures
             @out.puts "<thead><tr>"
             @out.puts arg_names.map {|arg| "<td>#{arg}</td>"}.join("\n")
+            @out.puts "<td>yield?</td>"
             @out.puts "<td>ref</td>"
             @out.puts "</tr></thead><tbody>"
 
             #group by same arguments
   
             methods_with_signature.group_by {|m| m.signature }.values.sort_by {|m| m.first.signature }.each do |method_list|
-              common_args = method_list.first.args
-              common_hash = common_args.first
+              common_method = method_list.first
+              common_hash = common_method.args.first
               @out.puts "<tr>"
               #argument values
               @out.puts arg_names.map {|arg| "<td>#{simplified_argument(common_hash[arg])}</td>"}.join("\n")
               #references to the methods (all are numbers)
+              @out.puts "<td>#{common_method.is_yielding}</td>"
               @out.puts "<td>"
                 method_list.each_with_index do |method, i|
                   @out.puts method_link(method, i+1)

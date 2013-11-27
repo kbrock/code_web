@@ -36,7 +36,7 @@ module CodeWeb
     end
 
     def signature
-      "#{method_name}(#{sorted_args.to_s})"
+      "#{method_name}(#{sorted_args.to_s})#{" yields" if is_yielding}"
     end
 
     def method_name

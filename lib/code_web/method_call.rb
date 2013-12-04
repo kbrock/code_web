@@ -36,10 +36,14 @@ module CodeWeb
     end
 
     def signature
-      "#{method_name}(#{sorted_args.to_s})#{" yields" if is_yielding}"
+      "#{full_method_name}(#{sorted_args.to_s})#{" yields" if is_yielding}"
     end
 
-    def method_name
+    def short_method_name
+      Array(name).last
+    end
+
+    def full_method_name
       Array(name).compact.join(".")
     end
 

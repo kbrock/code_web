@@ -18,7 +18,7 @@ module CodeWeb
     end
     
     def report
-      method_calls.each_pair do |name, methods|
+      method_calls.group_by {|m| m.short_method_name }.each_pair do |name, methods|
         @out.puts "---- #{name} ----"
         method_groupings = methods.group_by {|m| m.method_types }
         show_signatures  = method_groupings.count != 1

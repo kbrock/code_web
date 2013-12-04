@@ -30,7 +30,7 @@ module CodeWeb
       @out.puts "<body>"
 
       # all methods references
-      method_calls.each_pair do |name, methods|
+      method_calls.group_by {|m| m.short_method_name }.each_pair do |name, methods|
         @out.puts "<h2>#{name}</h2>"
         method_groupings = methods.group_by {|m| m.method_types }
         show_signatures  = method_groupings.count != 1
@@ -72,7 +72,7 @@ module CodeWeb
             methods_with_signature.group_by {|m| m.signature }.values.sort_by {|m| m.first.signature }.each do |method_list|
               #display name, first is name, rest is refs
               @out.puts method_list.each_with_index.map { |method, i|
-                method_link(method, ( i > 0) && i)
+                method_link(method, ( i > 0) && (i+1))
               }.join(" ") + "</br>"
             end
           end
@@ -96,7 +96,7 @@ module CodeWeb
 
     def method_link(m, count=nil)
       name = count ? "[#{count}]" : m.signature
-      "<a href='#{m.src.first}'#{" class='primary'" if m.src.first =~ main_file}>#{name}</a>"
+      "<a href='#{m.src.first}' title='#{m.signature}'  #{" class='primary'" if m.src.first =~ main_file}>#{name}</a>"
     end
   end
 end

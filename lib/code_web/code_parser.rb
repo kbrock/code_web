@@ -95,7 +95,7 @@ module CodeWeb
     def method_name_from_ast(ast)
       ast.map { |node|
         collapse_ast(node)
-      }.compact.join(".")
+      }.compact
     end
 
     #TODO: add collapse_ast
@@ -113,9 +113,9 @@ module CodeWeb
         when :true, :false, :self, :nil
           ast[0]
         when :call
-          "#{method_name_from_ast(ast[1..2])}#{'(...)' if ast.length > 3}"
+          "#{method_name_from_ast(ast[1..2]).join('.')}#{'(...)' if ast.length > 3}"
         when :colon2 #TODO: fix
-          "#{method_name_from_ast(ast[1..-1])}"
+          "#{method_name_from_ast(ast[1..-1]).join('.')}"
         when :dot2
           "#{collapse_ast(ast[1])}..#{collapse_ast(ast[2])}"
         when :colon3

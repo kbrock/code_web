@@ -18,7 +18,7 @@ module CodeWeb
       @parser = RubyParser.new
       @indent = 0
       @file_count = 0
-      @exit_on_error = true
+      @exit_on_error = false
       @method_cache = CodeWeb::MethodCache.new
     end
 

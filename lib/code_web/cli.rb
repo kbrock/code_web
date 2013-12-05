@@ -54,7 +54,7 @@ module CodeWeb
 #       opt.on('-n', '--requests=count',   Integer, "Number of requests (default: #{requests})")  { |v| options[:requests] = v }
         opt.on('-t', '--text',                      'Use text reports')                           { |v| self.report_generator = ::CodeWeb::TextReport }
         opt.on('-o', '--output FILENAME',           'Output filename')                            { |v| self.output = (v == '-') ? STDOUT : File.new(v,'w') }
-        opt.on('-e', '--error-out',                 'Don\'t exit on errors')                      { |v| self.exit_on_error = false}
+        opt.on('-e', '--error-out',                 'exit on unknown tagserrors')                 { |v| self.exit_on_error = true}
         opt.on_tail("-h", "--help", "Show this message")                                          { puts opt ; exit }
         opt.on_tail("-v", "--version", "Show version_information")                                { puts "Code Web version #{CodeWeb::VERSION}" ; exit }
         opt.parse!(arguments)
@@ -65,6 +65,7 @@ module CodeWeb
        
     def parse_files
       filenames.each do |arg|
+        arg = "#{arg}/**/*.rb" if Dir.exists?(arg)
         if File.exist?(arg)
           code_parser.parse arg
         else

@@ -36,7 +36,7 @@ module CodeWeb
     end
 
     def filename
-      File.realpath(src.first)
+      src.first
     end
 
     def signature

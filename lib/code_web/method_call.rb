@@ -35,6 +35,10 @@ module CodeWeb
       }
     end
 
+    def filename
+      File.realpath(src.first)
+    end
+
     def signature
       "#{full_method_name}(#{sorted_args.to_s})#{" yields" if is_yielding}"
     end

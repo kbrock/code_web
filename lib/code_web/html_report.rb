@@ -13,9 +13,13 @@ module CodeWeb
     #   @return [Regexp] regex expressing name of main file
     attr_accessor :main_file
 
+    # these are of lower importance
+    attr_accessor :secondary_file
+
     def initialize(method_calls, main_file=/$^/, out=STDOUT)
       @method_calls = method_calls
       @main_file = main_file
+      @secondary_file = /tools/
       @out = out
     end
     
@@ -24,6 +28,7 @@ module CodeWeb
       @out.puts "<head><style>"
       @out.puts "table {border-collapse:collapse;}"
       @out.puts "table, td, th { border:1px solid black;  }"
+      @out.puts ".secondary, a.secondary { color: #ccc; }"
       @out.puts ".primary, a.primary { color: #999; }"
       @out.puts "</style>"
       @out.puts "</head>"
@@ -96,7 +101,13 @@ module CodeWeb
 
     def method_link(m, count=nil)
       name = count ? "[#{count}]" : m.signature
-      "<a href='#{m.src.first}' title='#{m.signature}'  #{" class='primary'" if m.src.first =~ main_file}>#{name}</a>"
+      if m.src.first =~ main_file
+        class_name = 'primary'
+      elsif m.src.first =~ secondary_file
+        class_name = 'secondary'
+      end
+      #NOTE: may want to CGI::escape(m.src.first)
+      "<a href='subl://open?url=file://#{m.filename}' title='#{m.signature}'  #{" class='#{class_name}'" if class_name}>#{name}</a>"
     end
   end
 end

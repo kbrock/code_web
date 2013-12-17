@@ -16,9 +16,9 @@ module CodeWeb
     #   @return class that runs the report (i.e.: TextReport, HtmlReport) 
     attr_accessor :report_generator
 
-    # @attribute method_filename
-    #   @return [Regexp] name of the file that defines the report class 
-    attr_accessor :method_filename
+    # @attribute class_map
+    #   @return [Map<Regexp,html_class>] files/directories with specal emphasis
+    attr_accessor :class_map
 
     # @attribute arguments [r]
     #   @return [Array<String>] command line arguments
@@ -33,6 +33,7 @@ module CodeWeb
     def initialize(arguments)
       @arguments = arguments
       @code_parser = CodeWeb::CodeParser.new
+      @class_map = {}
     end
 
     def run
@@ -44,23 +45,23 @@ module CodeWeb
     def parse_arguments
       #defaults
       self.report_generator = ::CodeWeb::HtmlReport
-      self.method_filename = /miq_queue.rb$/
-      self.method_regex = /MiqQueue\b/
       self.output = STDOUT
 
       #parsing the command line
       OptionParser.new do |opt|
-        opt.banner = "Usage: code_web "
+        opt.banner = "Usage: code_web regex [file_name ...]"
 #       opt.on('-n', '--requests=count',   Integer, "Number of requests (default: #{requests})")  { |v| options[:requests] = v }
         opt.on('-t', '--text',                      'Use text reports')                           { |v| self.report_generator = ::CodeWeb::TextReport }
         opt.on('-o', '--output FILENAME',           'Output filename')                            { |v| self.output = (v == '-') ? STDOUT : File.new(v,'w') }
-        opt.on('-e', '--error-out',                 'exit on unknown tagserrors')                 { |v| self.exit_on_error = true}
+        opt.on('-e', '--error-out',                 'exit on unknown tags')                       { |v| self.exit_on_error = true}
+        opt.on('-p', '--pattern FILENAME_REGEX=CSS','pattern to emphasize a file')                { |v| v = v.split('=') ; self.class_map[Regexp.new(v.first)] = v.last }
         opt.on_tail("-h", "--help", "Show this message")                                          { puts opt ; exit }
         opt.on_tail("-v", "--version", "Show version_information")                                { puts "Code Web version #{CodeWeb::VERSION}" ; exit }
         opt.parse!(arguments)
 
-        self.filenames = arguments.dup
       end
+      self.method_regex = Regexp.new(arguments[0])
+      self.filenames = arguments[1..-1]
     end
        
     def parse_files
@@ -78,7 +79,7 @@ module CodeWeb
 
     def display_results
       STDOUT.puts "parsed #{files_parsed} files"
-      report_generator.new(method_calls, method_filename, output).report
+      report_generator.new(method_calls, class_map, output).report
     end
   end
 end

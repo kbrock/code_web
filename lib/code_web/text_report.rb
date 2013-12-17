@@ -5,15 +5,8 @@ module CodeWeb
     #   @return [Array<MethodCall>]
     attr_accessor :method_calls
 
-    # @!attribute :main_file [rw]
-    #   regex for the primary file (Defining the method we are searching for)
-    #   so references can look different
-    #   @return [Regexp] regex expressing name of main file
-    attr_accessor :main_file
-
-    def initialize(method_calls, main_file=/$^/, out=STDOUT)
+    def initialize(method_calls, class_map=nil, out=STDOUT)
       @method_calls = method_calls
-      @main_file = main_file
       @out = out
     end
     

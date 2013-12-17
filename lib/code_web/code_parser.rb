@@ -5,7 +5,7 @@ require 'ruby_parser'
 
 module CodeWeb
   class CodeParser
-    SPACES = (0..10).map { |i| "  " * i}
+    SPACES = Hash.new {|h, n| h[n] = "  " * h.to_i }
 
     attr_accessor :method_cache
     attr_accessor :file_count

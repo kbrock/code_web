@@ -18,7 +18,8 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+    $ code_web -p 'miq_queue.rb$=primary' -p 'tools/=secondary' 'MiqQueue\b' app tools lib
+
 
 ## Contributing
 

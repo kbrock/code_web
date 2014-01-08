@@ -100,7 +100,7 @@ module CodeWeb
       name = count ? "[#{count}]" : m.signature
       class_name = nil
       class_map.each_pair do |pattern, clazz|
-        if m.src.first =~ pattern
+        if m.filename =~ pattern
           class_name = clazz
           break
         end

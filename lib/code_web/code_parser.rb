@@ -113,13 +113,23 @@ module CodeWeb
         when :true, :false, :self, :nil
           ast[0]
         when :call
-          "#{method_name_from_ast(ast[1..2]).join('.')}#{'(...)' if ast.length > 3}"
+          if ast[2] == :[]
+            "#{method_name_from_ast(ast[1..1]).join('.')}[#{collapse_ast(ast[3])}]"
+          else
+            "#{method_name_from_ast(ast[1..2]).join('.')}#{'(...)' if ast.length > 3}"
+          end
+        when :evstr
+          "#"+"{#{collapse_asts(ast[1..-1]).join}}"
         when :colon2 #TODO: fix
           "#{method_name_from_ast(ast[1..-1]).join('.')}"
         when :dot2
           "#{collapse_ast(ast[1])}..#{collapse_ast(ast[2])}"
         when :colon3
-          "::#{collapse_ast(ast[1..-1])}"
+          "::#{collapse_asts(ast[1..-1]).join}"
+        when :[]
+          "[#{collapse_asts(ast[1..-1]).join}]"
+        when :dstr
+          "#{collapse_asts(ast[1..-1]).join}"
         #backref?
         else
           if max > 0
@@ -133,6 +143,10 @@ module CodeWeb
       else
         ast
       end
+    end
+
+    def collapse_asts(ast, max=20)
+      ast.map {|node| collapse_ast(node)}
     end
 
     def parse(file_name, file_data=nil, required_string=nil)

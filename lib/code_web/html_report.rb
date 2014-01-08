@@ -20,6 +20,24 @@ module CodeWeb
       @out = out
     end
     
+    # helpers
+
+    def methods_by_name
+      method_calls.group_by {|m| m.short_method_name }
+    end
+
+    def methods_by_arg_types(methods)
+      methods.group_by {|m| m.method_types }.sort_by {|t,s| t}
+    end
+
+    def hash_method?(methods)
+      methods.first.args.first.class == Hash
+    end
+
+    def methods_by_signatues(methods)
+      methods.group_by {|m| m.signature }.values.sort_by {|m| m.first.signature }
+    end
+
     def report
       @out.puts "<html>"
       @out.puts "<head><style>"
@@ -32,18 +50,13 @@ module CodeWeb
       @out.puts "<body>"
 
       # all methods references
-      method_calls.group_by {|m| m.short_method_name }.each_pair do |name, methods|
+      methods_by_name.each_pair do |name, methods|
         @out.puts "<h2>#{name}</h2>"
-        method_groupings = methods.group_by {|m| m.method_types }
-        show_signatures  = method_groupings.count != 1
-
-        # group them with same signatures
-        method_groupings.sort_by {|t,s| t}.each do |(method_types, methods_with_signature)|
+        methods_by_arg_types(methods).each do |(method_types, methods_with_signature)|
           #methods with hashes, lets create a table with hash keys along the top
-          if methods_with_signature.first.args.first.class == Hash
+          if hash_method?(methods_with_signature)
             arg_names = all_hash_names(methods_with_signature)
             @out.puts "<table>"
-            #@out.puts "<caption>#{method_types}</caption>" if show_signatures
             @out.puts "<thead><tr>"
             @out.puts arg_names.map {|arg| "<td>#{arg}</td>"}.join("\n")
             @out.puts "<td>yield?</td>"
@@ -51,7 +64,7 @@ module CodeWeb
             @out.puts "</tr></thead><tbody>"
 
             #group by same arguments
-            methods_with_signature.group_by {|m| m.signature }.values.sort_by {|m| m.first.signature }.each do |method_list|
+            methods_by_signatues(methods_with_signature).each do |method_list|
               common_method = method_list.first
               common_hash = common_method.args.first
               @out.puts "<tr>"
@@ -69,9 +82,8 @@ module CodeWeb
             @out.puts "</tbody>"
             @out.puts "</table>"
           else
-#            @out.puts "<h3>#{method_types}</h3>" if show_signatures
             #group by same arguments
-            methods_with_signature.group_by {|m| m.signature }.values.sort_by {|m| m.first.signature }.each do |method_list|
+            methods_by_signatues(methods_with_signature).each do |method_list|
               #display refs. first is the signature, others are numbered.
               @out.puts method_list.each_with_index.map { |method, i|
                 method_link(method, ( i > 0) && (i+1))

@@ -1,8 +1,10 @@
 module CodeWeb
   # method call reference
   class MethodCall
-    # where in our code is this originating
-    attr_accessor :src
+    # file that has this method call
+    attr_accessor :filename
+    # line number that has this method
+    attr_accessor :line
     # method name
     attr_accessor :name
     # what arguments are passed in
@@ -11,8 +13,9 @@ module CodeWeb
     # is this calling a yield block
     attr_accessor :is_yielding
 
-    def initialize(src=nil, name=nil, args=[], is_yielding=false)
-      @src = src
+    def initialize(filename, line, name=nil, args=[], is_yielding=false)
+      @filename = filename
+      @line = line
       @name = name
       @args = sorted_hash(args)
       @is_yielding = !! is_yielding
@@ -33,10 +36,6 @@ module CodeWeb
           'str'
         end
       }
-    end
-
-    def filename
-      src.first
     end
 
     def signature

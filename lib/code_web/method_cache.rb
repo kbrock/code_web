@@ -11,10 +11,8 @@ module CodeWeb
       @method_regex = method_regex      
     end
 
-    def add_method(src, method_name, args=[], is_yield=false)
-      if method_name.join('.') =~ method_regex
-        @method_calls << CodeWeb::MethodCall.new(src, method_name, args, is_yield)
-      end
+    def <<(mc)
+      @method_calls << mc if mc.full_method_name =~ method_regex
     end
   end
 end

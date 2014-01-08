@@ -87,7 +87,7 @@ module CodeWeb
       method_name = method_name_from_ast(ast[1..2])
       args = ast[3..-1].map {|arg| collapse_ast(arg,1)}
 
-      method_cache.add_method(@cur_method.dup, method_name, args, is_yield)
+      method_cache << MethodCall.new(ast.file, ast.line, method_name, args, is_yield)
 
       puts "#{spaces}#{method_name}(#{args.map{|arg|arg.inspect}.join(", ")})#{" do" if is_yield}" if $debug
     end

@@ -106,7 +106,7 @@ module CodeWeb
         end
       end
       #NOTE: may want to CGI::escape(m.src.first)
-      "<a href='subl://open?url=file://#{m.filename}' title='#{m.signature}'#{" class='#{class_name}'" if class_name}>#{name}</a>"
+      "<a href='subl://open?url=file://#{m.filename}&line=#{m.line}' title='#{m.signature}'#{" class='#{class_name}'" if class_name}>#{name}</a>"
     end
   end
 end

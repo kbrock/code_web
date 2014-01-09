@@ -37,12 +37,15 @@ table, td, th { border:1px solid black;  }
   <!-- METHOD BY ARG TYPE -->
     <%- if hash_method?(methods_with_signature) -%>
       <%- arg_names = all_hash_names(methods_with_signature) -%>
+      <%- needs_yield = methods_with_signature.detect {|m| m.yields? } -%>
       <table><!-- HASH_METHOD -->
       <thead><tr>
         <%- arg_names.each do |arg| -%>
           <td><%=arg%></td>
         <%- end -%>
+        <%- if needs_yield -%>
         <td>yield?</td>
+        <%- end -%>
         <td>ref</td>
       </tr></thead>
       <tbody>
@@ -52,9 +55,11 @@ table, td, th { border:1px solid black;  }
         -%>
         <tr>
         <%- arg_names.each do |arg| -%>
-          <td><%= simplified_argument(common_hash[arg])%></td>
+          <td><span title="<%=common_hash[arg].to_s.gsub('"','&quot;')%>"><%= simplified_argument(common_hash[arg])%></span></td>
         <%- end -%>
-          <td><%= common_method.is_yielding %></td>
+          <%- if needs_yield -%>
+          <td><%= common_method.yields? %></td>
+          <%- end -%>
           <td><% method_list.each_with_index do |method, i| %>
               <%= method_link(method, i+1) %>
           <% end %></td>
@@ -103,7 +108,7 @@ table, td, th { border:1px solid black;  }
     private
 
     def simplified_argument(obj)
-      obj.nil? ? nil : obj.to_s[0..15]
+      obj.nil? ? nil : obj.to_s[0..12]
     end
     # @param methods [Array<Method>] array of methods (with a hash first argument)
     # @return [Array<String>] list of all keys for all hashes
@@ -120,7 +125,7 @@ table, td, th { border:1px solid black;  }
           break
         end
       end
-      #NOTE: may want to CGI::escape(m.src.first)
+      #NOTE: may want to CGI::escape(m.filename)
       "<a href='subl://open?url=file://#{m.filename}&line=#{m.line}' title='#{m.signature}'#{" class='#{class_name}'" if class_name}>#{name}</a>"
     end
   end

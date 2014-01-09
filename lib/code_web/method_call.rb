@@ -25,6 +25,10 @@ module CodeWeb
       args.nil? || args.empty?
     end
 
+    def yields?
+      is_yielding
+    end
+
     def method_types
       args.map { |arg|
         case arg

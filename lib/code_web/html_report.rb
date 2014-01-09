@@ -12,7 +12,7 @@ module CodeWeb
     #   map from regex to class name
     #   if the filename that has the method matches the regex, the classname
     #     will get assigned to the link (to emphasize certain files/directories)
-    #   @return [Map<Regexp,class_name>] regex expressing name of main file
+    #   @return [Map<Regexp,color>] regex expressing name of main file
     attr_accessor :class_map
 
     def initialize(method_calls, class_map={}, out=STDOUT)
@@ -26,8 +26,9 @@ module CodeWeb
 <head><style>
 table {border-collapse:collapse;}
 table, td, th { border:1px solid black;  }
-.secondary, a.secondary { color: #ccc; }
-.primary, a.primary { color: #999; }
+<%- @class_map.each_with_index do |(pattern, color), i| -%>
+.f<%=i%>, a.f<%=i%> { color: <%=color%>; }
+<%- end -%>
 </style>
 </head>
 <body>
@@ -119,9 +120,9 @@ table, td, th { border:1px solid black;  }
     def method_link(m, count=nil)
       name = count ? "[#{count}]" : m.signature
       class_name = nil
-      class_map.each_pair do |pattern, clazz|
+      class_map.each_with_index do |(pattern, color), i|
         if m.filename =~ pattern
-          class_name = clazz
+          class_name = "f#{i}"
           break
         end
       end

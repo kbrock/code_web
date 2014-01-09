@@ -54,7 +54,7 @@ module CodeWeb
         opt.on('-t', '--text',                      'Use text reports')                           { |v| self.report_generator = ::CodeWeb::TextReport }
         opt.on('-o', '--output FILENAME',           'Output filename')                            { |v| self.output = (v == '-') ? STDOUT : File.new(v,'w') }
         opt.on('-e', '--error-out',                 'exit on unknown tags')                       { |v| self.exit_on_error = true}
-        opt.on('-p', '--pattern FILENAME_REGEX=CSS','pattern to emphasize a file')                { |v| v = v.split('=') ; self.class_map[Regexp.new(v.first)] = v.last }
+        opt.on('-p', '--pattern FILENAME_REGEX=COLOR','color to emphasize a file')                { |v| v = v.split('=') ; self.class_map[Regexp.new(v.first)] = v.last }
         opt.on_tail("-h", "--help", "Show this message")                                          { puts opt ; exit }
         opt.on_tail("-v", "--version", "Show version_information")                                { puts "Code Web version #{CodeWeb::VERSION}" ; exit }
         opt.parse!(arguments)

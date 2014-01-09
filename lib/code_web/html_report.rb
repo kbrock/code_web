@@ -1,4 +1,5 @@
 require 'set'
+require 'erb'
 
 module CodeWeb
   class HtmlReport
@@ -19,7 +20,68 @@ module CodeWeb
       @class_map = class_map
       @out = out
     end
-    
+
+    TEMPLATE=%{
+<html>
+<head><style>
+table {border-collapse:collapse;}
+table, td, th { border:1px solid black;  }
+.secondary, a.secondary { color: #ccc; }
+.primary, a.primary { color: #999; }
+</style>
+</head>
+<body>
+<%- methods_by_name.each_pair do |name, methods| -%>
+  <h2><%=name%></h2>
+  <%- methods_by_arg_types(methods).each do |(method_types, methods_with_signature)| -%>
+  <!-- METHOD BY ARG TYPE -->
+    <%- if hash_method?(methods_with_signature) -%>
+      <%- arg_names = all_hash_names(methods_with_signature) -%>
+      <table><!-- HASH_METHOD -->
+      <thead><tr>
+        <%- arg_names.each do |arg| -%>
+          <td><%=arg%></td>
+        <%- end -%>
+        <td>yield?</td>
+        <td>ref</td>
+      </tr></thead>
+      <tbody>
+      <%- methods_by_signatues(methods_with_signature).each do |method_list|
+        common_method = method_list.first
+        common_hash = common_method.args.first
+        -%>
+        <tr>
+        <%- arg_names.each do |arg| -%>
+          <td><%= simplified_argument(common_hash[arg])%></td>
+        <%- end -%>
+          <td><%= common_method.is_yielding %></td>
+          <td><% method_list.each_with_index do |method, i| %>
+              <%= method_link(method, i+1) %>
+          <% end %></td>
+        </tr>
+      <%- end -%>
+      </tbody>
+      </table><!-- HASH_METHOD -->
+    <%- else -%>
+      <% methods_by_signatues(methods_with_signature).each do |method_list| %>
+        <%= method_list.each_with_index.map { |method, i|
+          method_link(method, ( i > 0) && (i+1))
+        }.join(" ") + "</br>" %>
+      <%- end -%>
+    <%- end -%>
+  <!-- /METHOD BY ARG TYPE -->
+  <%- end -%>
+
+<%- end -%>
+</body>
+</html>
+}
+
+    def report
+      template = ERB.new(TEMPLATE, nil, "-")
+      @out.puts template.result(binding)
+    end
+
     # helpers
 
     def methods_by_name
@@ -36,65 +98,6 @@ module CodeWeb
 
     def methods_by_signatues(methods)
       methods.group_by {|m| m.signature }.values.sort_by {|m| m.first.signature }
-    end
-
-    def report
-      @out.puts "<html>"
-      @out.puts "<head><style>"
-      @out.puts "table {border-collapse:collapse;}"
-      @out.puts "table, td, th { border:1px solid black;  }"
-      @out.puts ".secondary, a.secondary { color: #ccc; }"
-      @out.puts ".primary, a.primary { color: #999; }"
-      @out.puts "</style>"
-      @out.puts "</head>"
-      @out.puts "<body>"
-
-      # all methods references
-      methods_by_name.each_pair do |name, methods|
-        @out.puts "<h2>#{name}</h2>"
-        methods_by_arg_types(methods).each do |(method_types, methods_with_signature)|
-          #methods with hashes, lets create a table with hash keys along the top
-          if hash_method?(methods_with_signature)
-            arg_names = all_hash_names(methods_with_signature)
-            @out.puts "<table>"
-            @out.puts "<thead><tr>"
-            @out.puts arg_names.map {|arg| "<td>#{arg}</td>"}.join("\n")
-            @out.puts "<td>yield?</td>"
-            @out.puts "<td>ref</td>"
-            @out.puts "</tr></thead><tbody>"
-
-            #group by same arguments
-            methods_by_signatues(methods_with_signature).each do |method_list|
-              common_method = method_list.first
-              common_hash = common_method.args.first
-              @out.puts "<tr>"
-              #argument values
-              @out.puts arg_names.map {|arg| "<td>#{simplified_argument(common_hash[arg])}</td>"}.join("\n")
-              @out.puts "<td>#{common_method.is_yielding}</td>"
-              #references to the methods. all are numbered.
-              @out.puts "<td>"
-                method_list.each_with_index do |method, i|
-                  @out.puts method_link(method, i+1)
-                end
-              @out.puts "</td>"
-              @out.puts "</tr>"
-            end
-            @out.puts "</tbody>"
-            @out.puts "</table>"
-          else
-            #group by same arguments
-            methods_by_signatues(methods_with_signature).each do |method_list|
-              #display refs. first is the signature, others are numbered.
-              @out.puts method_list.each_with_index.map { |method, i|
-                method_link(method, ( i > 0) && (i+1))
-              }.join(" ") + "</br>"
-            end
-          end
-        end
-        @out.puts
-      end
-      @out.puts "</body>"
-      @out.puts "</html>"
     end
 
     private

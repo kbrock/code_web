@@ -11,6 +11,7 @@ module CodeWeb
     attr_accessor :file_count
     attr_accessor :exit_on_error
     def method_regex=(regex) ; @method_cache.method_regex= regex ; end
+    def arg_regex=(regex) ; @method_cache.arg_regex= regex ; end
     def method_calls ; @method_cache.method_calls ; end
 
     def initialize

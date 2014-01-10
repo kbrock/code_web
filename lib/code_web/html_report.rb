@@ -50,7 +50,7 @@ table, td, th { border:1px solid black;  }
         <td>ref</td>
       </tr></thead>
       <tbody>
-      <%- methods_by_signatues(methods_with_signature).each do |method_list|
+      <%- methods_by_signatues(methods_with_signature).each do |(signature, method_list)|
         common_method = method_list.first
         common_hash = common_method.args.first
         -%>
@@ -69,7 +69,7 @@ table, td, th { border:1px solid black;  }
       </tbody>
       </table><!-- HASH_METHOD -->
     <%- else -%>
-      <% methods_by_signatues(methods_with_signature).each do |method_list| %>
+      <% methods_by_signatues(methods_with_signature).each do |(signature, method_list)| %>
         <%= method_list.each_with_index.map { |method, i|
           method_link(method, ( i > 0) && (i+1))
         }.join(" ") + "</br>" %>
@@ -94,28 +94,33 @@ table, td, th { border:1px solid black;  }
       method_calls.group_by {|m| m.short_method_name }
     end
 
-    def methods_by_arg_types(methods)
-      methods.group_by {|m| m.method_types }.sort_by {|t,s| t}
+    def methods_by_arg_types(collection)
+      collection.group_by {|m| m.method_types }.sort_by {|t,s| t}
     end
 
-    def hash_method?(methods)
-      methods.first.args.first.class == Hash
+    def hash_method?(collection)
+      collection.first.hash_args?
     end
 
-    def methods_by_signatues(methods)
-      methods.group_by {|m| m.signature }.values.sort_by {|m| m.first.signature }
+    def methods_by_signatues(collection)
+      collection.group_by {|m| m.signature }.sort_by {|t,m| t }
     end
 
     private
 
+    # shorten the argument
     def simplified_argument(obj)
       obj.nil? ? nil : obj.to_s[0..12]
     end
-    # @param methods [Array<Method>] array of methods (with a hash first argument)
+
+    # @param collection [Array<Method>] methods (with a hash first argument)
     # @return [Array<String>] list of all keys for all hashes
-    def all_hash_names(methods)
-      methods.inject(Set.new) {|acc, m| m.args.first.keys.each {|k| acc << k} ; acc}.sort_by {|n| n}
+    def all_hash_names(collection)
+      collection.inject(Set.new) {|acc, m| m.arg_keys.each {|k| acc << k} ; acc}.sort_by {|n| n}
     end
+
+    # create a link to a method
+    # add a class if the method is in a particular file
 
     def method_link(m, count=nil)
       name = count ? "[#{count}]" : m.signature
@@ -127,7 +132,7 @@ table, td, th { border:1px solid black;  }
         end
       end
       #NOTE: may want to CGI::escape(m.filename)
-      "<a href='subl://open?url=file://#{m.filename}&line=#{m.line}' title='#{m.signature}'#{" class='#{class_name}'" if class_name}>#{name}</a>"
+      %{<a href="subl://open?url=file://#{m.filename}&line=#{m.line}" title="#{m.signature.gsub('"','&quot;')}"#{" class=\"#{class_name}\"" if class_name}>#{name}</a>}
     end
   end
 end

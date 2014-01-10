@@ -69,6 +69,14 @@ module CodeWeb
       end
     end
 
+    def hash_args?
+      args.first.class == Hash
+    end
+
+    def arg_keys
+      args.first.keys
+    end
+
     def ==(other)
       other &&
         other.name == @name &&

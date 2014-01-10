@@ -32,36 +32,32 @@ table, td, th { border:1px solid black;  }
 </style>
 </head>
 <body>
-<%- methods_by_name.each_pair do |name, methods| -%>
-  <h2><%=name%></h2>
-  <%- methods_by_arg_types(methods).each do |(method_types, methods_with_signature)| -%>
+<%- methods_by_name.each do |methods| -%>
+  <h2><%=methods.name%></h2>
+  <%- methods.group_by(:method_types).each do |methods_with_type| -%>
   <!-- METHOD BY ARG TYPE -->
-    <%- if hash_method?(methods_with_signature) -%>
-      <%- arg_names = all_hash_names(methods_with_signature) -%>
-      <%- needs_yield = methods_with_signature.detect {|m| m.yields? } -%>
+    <%- if methods_with_type.f.hash_args? -%>
+      <%- display_yield_column = methods_with_type.detect(&:yields?) -%>
       <table><!-- HASH_METHOD -->
       <thead><tr>
-        <%- arg_names.each do |arg| -%>
+        <%- methods_with_type.arg_keys.each do |arg| -%>
           <td><%=arg%></td>
         <%- end -%>
-        <%- if needs_yield -%>
+        <%- if display_yield_column -%>
         <td>yield?</td>
         <%- end -%>
         <td>ref</td>
       </tr></thead>
       <tbody>
-      <%- methods_by_signatues(methods_with_signature).each do |(signature, method_list)|
-        common_method = method_list.first
-        common_hash = common_method.args.first
-        -%>
+      <%- methods_with_type.group_by(:signature).each do |methods_by_signature| -%>
         <tr>
-        <%- arg_names.each do |arg| -%>
-          <td><span title="<%=common_hash[arg].to_s.gsub('"','&quot;')%>"><%= simplified_argument(common_hash[arg])%></span></td>
+        <%- methods_with_type.arg_keys.each do |arg| -%>
+          <td><%= simplified_argument(methods_by_signature.hash_arg[arg]) %></td>
         <%- end -%>
-          <%- if needs_yield -%>
-          <td><%= common_method.yields? %></td>
+          <%- if display_yield_column -%>
+          <td><%= methods_by_signature.f.yields? %></td>
           <%- end -%>
-          <td><% method_list.each_with_index do |method, i| %>
+          <td><% methods_by_signature.collection.each_with_index do |method, i| %>
               <%= method_link(method, i+1) %>
           <% end %></td>
         </tr>
@@ -69,8 +65,8 @@ table, td, th { border:1px solid black;  }
       </tbody>
       </table><!-- HASH_METHOD -->
     <%- else -%>
-      <% methods_by_signatues(methods_with_signature).each do |(signature, method_list)| %>
-        <%= method_list.each_with_index.map { |method, i|
+      <% methods_with_type.group_by(:signature).each do |methods_by_signature| %>
+        <%= methods_by_signature.collection.each_with_index.map { |method, i|
           method_link(method, ( i > 0) && (i+1))
         }.join(" ") + "</br>" %>
       <%- end -%>
@@ -91,11 +87,7 @@ table, td, th { border:1px solid black;  }
     # helpers
 
     def methods_by_name
-      method_calls.group_by {|m| m.short_method_name }
-    end
-
-    def methods_by_arg_types(collection)
-      collection.group_by {|m| m.method_types }.sort_by {|t,s| t}
+      MethodList.group_by(method_calls, :short_method_name)
     end
 
     def hash_method?(collection)
@@ -109,8 +101,9 @@ table, td, th { border:1px solid black;  }
     private
 
     # shorten the argument
-    def simplified_argument(obj)
-      obj.nil? ? nil : obj.to_s[0..12]
+    def simplified_argument(arg)
+      short_arg = arg.nil? ? nil : arg.to_s[0..12]
+      %{<span title="#{arg.to_s.gsub('"','&quot;')}">#{short_arg}</span>}
     end
 
     # @param collection [Array<Method>] methods (with a hash first argument)

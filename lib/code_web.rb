@@ -4,6 +4,7 @@ module CodeWeb
 end
 
 require 'code_web/method_call'
+require 'code_web/method_list'
 require 'code_web/method_cache'
 require 'code_web/code_parser'
 require 'code_web/text_report'

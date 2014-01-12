@@ -1,15 +1,14 @@
 require 'ruby_parser'
 
-#$verbose=true
-#$debug=true
-
 module CodeWeb
   class CodeParser
-    SPACES = Hash.new {|h, n| h[n] = "  " * h.to_i }
+    SPACES = Hash.new {|h, n| h[n] = "  " * n.to_i }
 
     attr_accessor :method_cache
     attr_accessor :file_count
     attr_accessor :exit_on_error
+    attr_accessor :debug
+    attr_accessor :verbose
     def method_regex=(regex) ; @method_cache.method_regex= regex ; end
     def arg_regex=(regex) ; @method_cache.arg_regex= regex ; end
     def arg_regex ; @method_cache.arg_regex ; end
@@ -25,7 +24,7 @@ module CodeWeb
     end
 
     def traverse(ast, has_yield=false)
-      puts "#{spaces}||#{collapse_ast(ast,1)}||" if $verbose
+      puts "#{spaces}||#{collapse_ast(ast,1)}||" if @verbose
       puts src if ast.nil?
       case ast.node_type
       #dstr = define string ("abc#{here}"),
@@ -39,22 +38,25 @@ module CodeWeb
            :super, :xstr, :for, :until, :dxstr, 
       #these end up being no-ops:
            :lit, :lvar, :const, :str, :nil, :gvar, :back_ref,
-           :true, :false, :colon2, :colon3, :self, :next, :alias,
+           :true, :false, :colon2, :colon3, :next, :alias,
            :nth_ref, :sclass, :cvdecl, :break, :retry, :undef,
       #random
            :svalue, :cvar
         traverse_nodes(ast, 1..-1)
-      when :module, :cdecl #name, statements[]
-        in_context ast[1] do
-          traverse_nodes(ast, 2..-1)
-        end
-      when :class, #name, parent, statements[]
-           :defn #name, args[], call[]
+      when :self
+        traverse_nodes(ast, 1..-1)
+      when :module, #name, statements[]
+           :class #name, parent, statements[]
         in_context ast[1], true, true do
           traverse_nodes(ast, 2..-1)
         end
+      when :cdecl, #name, statements[]
+           :defn #name, args[], call[]
+        in_context ast[1], true do
+          traverse_nodes(ast, 2..-1)
+        end
       when :defs #self[], name, args[], call[]
-        in_context ast[2], true, true do
+        in_context ast[2], true do
           traverse_nodes(ast, 2..-1)
         end
       when :iter #call[], yield_args[], yield_{block|call}[]
@@ -91,7 +93,7 @@ module CodeWeb
 
       method_cache << MethodCall.new(ast.file, ast.line, method_name, args, is_yield)
 
-      puts "#{spaces}#{method_name}(#{args.map{|arg|arg.inspect}.join(", ")})#{" do" if is_yield}" if $debug
+      puts "#{spaces}#{method_name}(#{args.map{|arg|arg.inspect}.join(", ")})#{" do" if is_yield}" if @debug
     end
 
     def method_name_from_ast(ast)
@@ -112,8 +114,10 @@ module CodeWeb
           ast[1..-1].map {|node| collapse_ast(node)}
         when :lit, :lvar, :const, :str, :ivar, :cvar
           ast[1]
-        when :true, :false, :self, :nil
+        when :true, :false, :nil
           ast[0]
+        when :self
+          ast[0] #TODO: use cur_method.last (if not a yield)
         when :call
           if ast[2] == :[]
             "#{method_name_from_ast(ast[1..1]).join('.')}[#{collapse_ast(ast[3])}]"
@@ -167,17 +171,20 @@ module CodeWeb
 
     # where in the source are we?
     def src
-      "#{@cur_method.first} | #{@cur_method[1..-1].join('.')}"
+      "#{@cur_method.first.last} | #{@cur_method.map(&:last)[1..-1].join('.')}"
     end
 
+    def self_name
+      @cur_method.select {|cm| cm.first == true}.last.last
+    end
     # mark the context of the method call.
     # optionally indents output as well
     # @param name [String] name of the block - file, module, class, method, 'yield'
     # @param indent [boolean] (false) indent this block
     # @param print_me [boolean] (false) print a tracer on this method
-    def in_context name, indent=false, print_me=false
-      @cur_method << name
-      puts ">> #{src}" if $debug && print_me 
+    def in_context name, indent=false, class_def=false
+      @cur_method << [ class_def, name]
+      puts ">> #{src}" if @debug && indent
       @indent += 1 if indent
       ret = yield
       @indent -= 1 if indent

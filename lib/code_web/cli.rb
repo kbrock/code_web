@@ -13,6 +13,8 @@ module CodeWeb
     def method_regex=(val) ; code_parser.method_regex = val ; end
     def arg_regex=(val) ; code_parser.arg_regex = val ; end
     def exit_on_error=(val) ; code_parser.exit_on_error = val ; end
+    def verbose=(val) ; code_parser.verbose = val ; end
+    def debug=(val) ; code_parser.debug = val ; end
 
     # @attribute report_generator [rw]
     #   @return class that runs the report (i.e.: TextReport, HtmlReport) 
@@ -57,6 +59,8 @@ module CodeWeb
         opt.on('-a', '--arg ARG_REGEX',             'Must contain hash argument')                 { |v| self.arg_regex = Regexp.new(v) }
         opt.on('-o', '--output FILENAME',           'Output filename')                            { |v| self.output = (v == '-') ? STDOUT : File.new(v,'w') }
         opt.on('-e', '--error-out',                 'exit on unknown tags')                       { |v| self.exit_on_error = true}
+        opt.on('-V', '--verbose',                   'verbose parsing')                            { |v| self.verbose = true}
+        opt.on('-D', '--debug',                     'debug parsing')                              { |v| self.debug = true}
         opt.on('-p', '--pattern FILENAME_REGEX=COLOR','color to emphasize a file')                { |v| v = v.split('=') ; self.class_map[Regexp.new(v.first)] = v.last }
         opt.on_tail("-h", "--help", "Show this message")                                          { puts opt ; exit }
         opt.on_tail("-v", "--version", "Show version_information")                                { puts "Code Web version #{CodeWeb::VERSION}" ; exit }

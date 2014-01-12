@@ -4,26 +4,42 @@ module CodeWeb
     #   list of all the method_Calls
     #   @return [Array<MethodCall>]
     attr_accessor :method_calls
+    attr_accessor :arg_regex
+    def arg_regex? ; ! arg_regex.nil? ; end
 
-    def initialize(method_calls, class_map=nil, out=STDOUT)
+    def initialize(method_calls, class_map=nil, arg_regex=nil, out=STDOUT)
       @method_calls = method_calls
+      @arg_regex = arg_regex
       @out = out
     end
     
     def report
-      method_calls.group_by {|m| m.short_method_name }.each_pair do |name, methods|
-        @out.puts "---- #{name} ----"
-        method_groupings = methods.group_by {|m| m.method_types }
-        show_signatures  = method_groupings.count != 1
-
-        method_groupings.sort_by {|t,s| t}.each do |(method_types, methods_with_signature)|
-          @out.puts "-------- #{method_types}" if show_signatures
-          methods_with_signature.sort_by {|m| m.signature }.each do |method|
-            @out.puts method.signature
+      methods_by_name.each do |methods|
+        @out.puts "---- #{methods.name} ----"
+        methods.group_by(:signature, arg_regex).each do |methods_with_signature|
+          if arg_regex?
+            @out.puts " --> #{arg_regex.inspect}=#{methods_with_signature.name}"
+          else
+            @out.puts " --> #{methods_with_signature.name}"
           end
+          @out.puts method.signature if methods_with_signature.single?
+          @out.puts
+          methods_with_signature.each_method_with_index do |method, i|
+            if ! methods_with_signature.single?
+              @out.puts
+              @out.puts method.signature
+            end
+            @out.puts "#{method.filename}:#{method.line}"
+          end
+          @out.puts
+          @out.puts
         end
         @out.puts
       end
+    end
+
+    def methods_by_name
+      MethodList.group_by(method_calls, :short_method_name)
     end
   end
 end

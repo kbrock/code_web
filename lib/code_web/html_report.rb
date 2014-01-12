@@ -7,6 +7,8 @@ module CodeWeb
     #   list of all the method_Calls
     #   @return [Array<MethodCall>]
     attr_accessor :method_calls
+    attr_accessor :arg_regex
+    def arg_regex? ; ! arg_regex.nil? ; end
 
     # @!attribute :class_map [rw]
     #   map from regex to class name
@@ -15,9 +17,10 @@ module CodeWeb
     #   @return [Map<Regexp,color>] regex expressing name of main file
     attr_accessor :class_map
 
-    def initialize(method_calls, class_map={}, out=STDOUT)
+    def initialize(method_calls, class_map={}, arg_regex=nil, out=STDOUT)
       @method_calls = method_calls
       @class_map = class_map
+      @arg_regex = arg_regex
       @out = out
     end
 
@@ -36,7 +39,7 @@ table, td, th { border:1px solid black;  }
   <h2><%=methods.name%></h2>
   <%- methods.group_by(:method_types).each do |methods_with_type| -%>
   <!-- METHOD BY ARG TYPE -->
-    <%- if methods_with_type.f.hash_args? -%>
+    <%- if methods_with_type.hash_args? -%>
       <%- display_yield_column = methods_with_type.detect(&:yields?) -%>
       <table><!-- HASH_METHOD -->
       <thead><tr>
@@ -49,7 +52,7 @@ table, td, th { border:1px solid black;  }
         <td>ref</td>
       </tr></thead>
       <tbody>
-      <%- methods_with_type.group_by(:signature).each do |methods_by_signature| -%>
+      <%- methods_with_type.group_by(:signature, arg_regex).each do |methods_by_signature| -%>
         <tr>
         <%- methods_with_type.arg_keys.each do |arg| -%>
           <td><%= simplified_argument(methods_by_signature.hash_arg[arg]) %></td>
@@ -57,7 +60,7 @@ table, td, th { border:1px solid black;  }
           <%- if display_yield_column -%>
           <td><%= methods_by_signature.f.yields? %></td>
           <%- end -%>
-          <td><% methods_by_signature.collection.each_with_index do |method, i| %>
+          <td><% methods_by_signature.each_method_with_index do |method, i| %>
               <%= method_link(method, i+1) %>
           <% end %></td>
         </tr>
@@ -66,8 +69,9 @@ table, td, th { border:1px solid black;  }
       </table><!-- HASH_METHOD -->
     <%- else -%>
       <% methods_with_type.group_by(:signature).each do |methods_by_signature| %>
-        <%= methods_by_signature.collection.each_with_index.map { |method, i|
-          method_link(method, ( i > 0) && (i+1))
+        <%= methods_by_signature.each_method_with_index.map { |method, i|
+          txt = ( i > 0) ? (i+1) : nil
+          method_link(method, txt)
         }.join(" ") + "</br>" %>
       <%- end -%>
     <%- end -%>
@@ -88,14 +92,6 @@ table, td, th { border:1px solid black;  }
 
     def methods_by_name
       MethodList.group_by(method_calls, :short_method_name)
-    end
-
-    def hash_method?(collection)
-      collection.first.hash_args?
-    end
-
-    def methods_by_signatues(collection)
-      collection.group_by {|m| m.signature }.sort_by {|t,m| t }
     end
 
     private

@@ -73,6 +73,10 @@ module CodeWeb
       args.first.class == Hash
     end
 
+    def hash_arg
+      args.first
+    end
+
     def arg_keys
       args.first.keys
     end

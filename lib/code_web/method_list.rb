@@ -12,8 +12,21 @@ class MethodList
     @collection = collection
   end
 
-  def group_by(name)
-    MethodList.new(name, collection.group_by {|m| m.send(name)}.sort_by {|n, ms| n })
+  def group_by(name, arg_regex=nil, &block)
+    if block.nil?
+      if arg_regex.nil?
+        block = Proc.new {|m| m.send(name)}
+      else
+        block = Proc.new {|m|
+          if m.hash_args?
+            m.hash_arg.collect {|n,v| v if n =~ arg_regex}.compact.join(" ")
+          else
+            m.signature
+          end
+        }
+      end
+    end
+    MethodList.new(name, collection.group_by(&block).sort_by {|n, ms| n })
   end
 
   def f
@@ -34,9 +47,25 @@ class MethodList
     collection.each_with_index(&block)
   end
 
+  def each_method_with_index(&block)
+    collection.each_with_index(&block)
+  end
+
+  def count
+    collection.count
+  end
+
+  def single?
+    count == 0
+  end
+
   # specific to the report
   def hash_arg
-    @hash ||= f.args.first
+    @hash ||= f.hash_arg
+  end
+
+  def hash_args?
+    f.hash_args?
   end
 
   def arg_keys

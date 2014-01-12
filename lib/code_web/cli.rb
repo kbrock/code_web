@@ -9,6 +9,7 @@ module CodeWeb
     attr_accessor :code_parser
     def method_calls ; code_parser.method_calls ; end
     def files_parsed ; code_parser.file_count ; end
+    def arg_regex ; code_parser.arg_regex ; end
     def method_regex=(val) ; code_parser.method_regex = val ; end
     def arg_regex=(val) ; code_parser.arg_regex = val ; end
     def exit_on_error=(val) ; code_parser.exit_on_error = val ; end
@@ -81,7 +82,7 @@ module CodeWeb
 
     def display_results
       STDOUT.puts "parsed #{files_parsed} files"
-      report_generator.new(method_calls, class_map, output).report
+      report_generator.new(method_calls, class_map, arg_regex, output).report
     end
   end
 end

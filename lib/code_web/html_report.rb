@@ -98,7 +98,14 @@ table, td, th { border:1px solid black;  }
 
     # shorten the argument
     def simplified_argument(arg)
-      short_arg = arg.nil? ? nil : arg.to_s[0..12]
+      short_arg = case arg
+      when nil
+        nil
+      when String
+        arg.split("::").last[0..12]
+      else
+        arg.to_s[0..12]
+      end
       %{<span title="#{arg.to_s.gsub('"','&quot;')}">#{short_arg}</span>}
     end
 

@@ -55,8 +55,8 @@ module CodeWeb
         in_context ast[1], true do
           traverse_nodes(ast, 2..-1)
         end
-      when :defs #self[], name, args[], call[]
-        in_context ast[2], true do
+      when :defs #self[], name, args[], call[] # static method
+        in_context ast[2], :static do
           traverse_nodes(ast, 2..-1)
         end
       when :iter #call[], yield_args[], yield_{block|call}[]
@@ -107,6 +107,11 @@ module CodeWeb
     # (so don't add double quotes, or do 'nil')
     def collapse_ast(ast, max=20)
       if ast.is_a?(Sexp)
+        if static?
+          ast = ast.gsub(Sexp.new(:self), Sexp.new(:const, self_name))
+        else
+          ast = ast.gsub(Sexp.new(:call, Sexp.new(:self),:class), Sexp.new(:const, self_name))
+        end
         case ast.node_type
         when :hash #name, value, name, value, ...
           Hash[*ast[1..-1].map {|i| collapse_ast(i)}]
@@ -117,7 +122,7 @@ module CodeWeb
         when :true, :false, :nil
           ast[0]
         when :self
-          ast[0] #TODO: use cur_method.last (if not a yield)
+          ast[0]
         when :call
           if ast[2] == :[]
             "#{method_name_from_ast(ast[1..1]).join('.')}[#{collapse_ast(ast[3])}]"
@@ -126,8 +131,8 @@ module CodeWeb
           end
         when :evstr
           "#"+"{#{collapse_asts(ast[1..-1]).join}}"
-        when :colon2 #TODO: fix
-          "#{method_name_from_ast(ast[1..-1]).join('.')}"
+        when :colon2
+          "#{method_name_from_ast(ast[1..-1]).join('::')}"
         when :dot2
           "#{collapse_ast(ast[1])}..#{collapse_ast(ast[2])}"
         when :colon3
@@ -171,20 +176,29 @@ module CodeWeb
 
     # where in the source are we?
     def src
-      "#{@cur_method.first.last} | #{@cur_method.map(&:last)[1..-1].join('.')}"
+      "#{@cur_method.first.first} | #{@cur_method.map(&:first)[1..-1].join('.')}"
     end
 
+    # return nil if we haven't hit a class yet
     def self_name
-      @cur_method.select {|cm| cm.first == true}.last.last
+      #cm[1] == true for module/class definitions
+      node=@cur_method.select {|cm| cm[1] == true}.last
+      node.first unless node.nil?
     end
+
+    def static?
+      @cur_method.last.last
+    end
+
     # mark the context of the method call.
     # optionally indents output as well
     # @param name [String] name of the block - file, module, class, method, 'yield'
-    # @param indent [boolean] (false) indent this block
-    # @param print_me [boolean] (false) print a tracer on this method
+    # @param indent [boolean] (false) indent this block (pass :static if this is a static method)
+    # @param class_def [boolean] (false) true if this is a class definition
     def in_context name, indent=false, class_def=false
-      @cur_method << [ class_def, name]
-      puts ">> #{src}" if @debug && indent
+      name = collapse_ast(name) #split("::").last
+      @cur_method << [ name, class_def, indent == :static]
+      puts ">> #{'self.' if static?}#{src}" if @debug && indent
       @indent += 1 if indent
       ret = yield
       @indent -= 1 if indent

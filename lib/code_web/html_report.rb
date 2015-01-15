@@ -38,10 +38,9 @@ table, td, th { border:1px solid black;  }
 <%- methods_by_name.each do |methods| -%>
   <h2><%=methods.name%></h2>
   <%- methods.group_by(:method_types).each do |methods_with_type| -%>
-  <!-- METHOD BY ARG TYPE -->
     <%- if methods_with_type.hash_args? -%>
       <%- display_yield_column = methods_with_type.detect(&:yields?) -%>
-      <table><!-- HASH_METHOD -->
+      <table>
       <thead><tr>
         <%- methods_with_type.arg_keys.each do |arg| -%>
           <td><%=arg%></td>
@@ -66,7 +65,7 @@ table, td, th { border:1px solid black;  }
         </tr>
       <%- end -%>
       </tbody>
-      </table><!-- HASH_METHOD -->
+      </table>
     <%- else -%>
       <% methods_with_type.group_by(:signature).each do |methods_by_signature| %>
         <%= methods_by_signature.each_method_with_index.map { |method, i|
@@ -128,7 +127,7 @@ table, td, th { border:1px solid black;  }
         end
       end
       #NOTE: may want to CGI::escape(m.filename)
-      %{<a href="subl://open?url=file://#{m.filename}&line=#{m.line}" title="#{m.signature.gsub('"','&quot;')}"#{" class=\"#{class_name}\"" if class_name}>#{name}</a>}
+      %{<a href="subl://open?url=file://#{m.filename}&amp;line=#{m.line}" title="#{html_safe(m.signature)}"#{" class=\"#{class_name}\"" if class_name}>#{name}</a>}
     end
   end
 end

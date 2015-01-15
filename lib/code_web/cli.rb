@@ -15,6 +15,7 @@ module CodeWeb
     def exit_on_error=(val) ; code_parser.exit_on_error = val ; end
     def verbose=(val) ; code_parser.verbose = val ; end
     def debug=(val) ; code_parser.debug = val ; end
+    def debug? ; code_parser.debug? ; end
 
     # @attribute report_generator [rw]
     #   @return class that runs the report (i.e.: TextReport, HtmlReport) 
@@ -56,7 +57,7 @@ module CodeWeb
         opt.banner = "Usage: code_web regex [file_name ...]"
 #       opt.on('-n', '--requests=count',   Integer, "Number of requests (default: #{requests})")  { |v| options[:requests] = v }
         opt.on('-t', '--text',                      'Use text reports')                           { |v| self.report_generator = ::CodeWeb::TextReport }
-        opt.on('-a', '--arg ARG_REGEX',             'Must contain hash argument')                 { |v| self.arg_regex = Regexp.new(v) }
+        opt.on('-a', '--arg ARG_REGEX',             'Only files with hash argument')              { |v| self.arg_regex = Regexp.new(v) }
         opt.on('-o', '--output FILENAME',           'Output filename')                            { |v| self.output = (v == '-') ? STDOUT : File.new(v,'w') }
         opt.on('-e', '--error-out',                 'exit on unknown tags')                       { |v| self.exit_on_error = true}
         opt.on('-V', '--verbose',                   'verbose parsing')                            { |v| self.verbose = true}
@@ -75,9 +76,11 @@ module CodeWeb
       filenames.each do |arg|
         arg = "#{arg}/**/*.rb" if Dir.exists?(arg)
         if File.exist?(arg)
+          puts arg if debug?
           code_parser.parse arg
         else
           Dir[arg].each do |file_name|
+            puts arg if debug?
             code_parser.parse(file_name)
           end
         end

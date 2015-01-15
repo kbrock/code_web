@@ -9,6 +9,8 @@ module CodeWeb
     attr_accessor :exit_on_error
     attr_accessor :debug
     attr_accessor :verbose
+    def verbose? ; @verbose ; end
+    def debug? ; @debug ; end
     def method_regex=(regex) ; @method_cache.method_regex= regex ; end
     def arg_regex=(regex) ; @method_cache.arg_regex= regex ; end
     def arg_regex ; @method_cache.arg_regex ; end
@@ -24,7 +26,7 @@ module CodeWeb
     end
 
     def traverse(ast, has_yield=false)
-      puts "#{spaces}||#{collapse_ast(ast,1)}||" if @verbose
+      puts "#{spaces}||#{collapse_ast(ast,1)}||" if verbose?
       puts src if ast.nil?
       case ast.node_type
       #dstr = define string ("abc#{here}"),
@@ -93,7 +95,7 @@ module CodeWeb
 
       method_cache << MethodCall.new(ast.file, ast.line, method_name, args, is_yield)
 
-      puts "#{spaces}#{method_name}(#{args.map{|arg|arg.inspect}.join(", ")})#{" do" if is_yield}" if @debug
+      puts "#{spaces}#{method_name}(#{args.map{|arg|arg.inspect}.join(", ")})#{" do" if is_yield}" if debug?
     end
 
     def method_name_from_ast(ast)
@@ -198,7 +200,7 @@ module CodeWeb
     def in_context name, indent=false, class_def=false
       name = collapse_ast(name) #split("::").last
       @cur_method << [ name, class_def, indent == :static]
-      puts ">> #{'self.' if static?}#{src}" if @debug && indent
+      puts ">> #{'self.' if static?}#{src}" if debug? && indent
       @indent += 1 if indent
       ret = yield
       @indent -= 1 if indent

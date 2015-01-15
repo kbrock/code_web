@@ -67,9 +67,13 @@ module CodeWeb
         opt.on_tail("-v", "--version", "Show version_information")                                { puts "Code Web version #{CodeWeb::VERSION}" ; exit }
         opt.parse!(arguments)
 
+        if arguments.length == 0
+          puts opt
+          exit
+        end
       end
       self.method_regex = Regexp.new(arguments[0])
-      self.filenames = arguments[1..-1]
+      self.filenames = arguments[1..-1] || "."
     end
        
     def parse_files

@@ -165,12 +165,16 @@ module CodeWeb
     def parse(file_name, file_data=nil, required_string=nil)
       #may make more sense to get this into cli (and an option for absolute path)
       file_name = File.realpath(file_name)
-      @file_count += 1
       file_data ||= File.binread(file_name)
-      if required_string.nil? || file_date.include?(required_string)
-        in_context file_name do
-          traverse @parser.process file_data, file_name
+      begin
+        if required_string.nil? || file_data.include?(required_string)
+          in_context file_name do
+            traverse @parser.process file_data, file_name
+          end
         end
+        @file_count += 1
+      rescue => e
+        STDERR.puts("#{e}: [#{file_data.size}] #{file_name}")
       end
     end
 

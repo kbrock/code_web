@@ -12,7 +12,7 @@ class MethodList
     @collection = collection
   end
 
-  def group_by(name, arg_regex=nil, &block)
+  def group_by(name, arg_regex=nil, sort_by = nil, &block)
     if block.nil?
       if arg_regex.nil?
         block = Proc.new {|m| m.send(name)}
@@ -26,7 +26,7 @@ class MethodList
         }
       end
     end
-    MethodList.new(name, collection.group_by(&block).sort_by {|n, ms| n })
+    MethodList.new(name, collection.group_by(&block).sort_by {|n, ms| sort_by ? ms.first.send(sort_by) : n })
   end
 
   def f
@@ -68,12 +68,16 @@ class MethodList
     f.hash_args?
   end
 
+  def args_size
+    f.args_size
+  end
+
   def arg_keys
     @arg_keys ||= collection.inject(Set.new) {|acc, m| m.arg_keys.each {|k| acc << k} ; acc}.sort_by {|n| n}
   end
 
   def arg_value(key)
-    @hash[key]
+    hash_arg[key]
   end
 
   def self.group_by(collection, name)

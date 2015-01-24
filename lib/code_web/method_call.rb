@@ -9,7 +9,7 @@ module CodeWeb
     attr_accessor :name
     # what arguments are passed in
     attr_accessor :args
-    def arguments ; args ; end
+    alias :arguments :args
     # is this calling a yield block
     attr_accessor :is_yielding
 
@@ -30,16 +30,11 @@ module CodeWeb
     end
 
     def method_types
-      args.map { |arg|
-        case arg
-        when Array
-          '[]'
-        when Hash
-          '{}'
-        else
-          'str'
-        end
-      }
+      args.map { |arg| arg_type(arg) }
+    end
+
+    def small_signature
+      [arg_type(args.first), args.size]
     end
 
     def signature
@@ -73,6 +68,10 @@ module CodeWeb
       args.first.class == Hash
     end
 
+    def args_size
+      args.size
+    end
+
     def hash_arg
       args.first
     end
@@ -86,6 +85,23 @@ module CodeWeb
         other.name == @name &&
         other.args == @args &&
         other.is_yielding == @is_yielding
+    end
+
+    private
+
+    def arg_type(arg)
+      case arg
+      when Array
+        '[]'
+      when Hash
+        '{}'
+      when nil
+        "nil"
+      when Symbol
+        ':'
+      else
+        'str'
+      end
     end
   end
 end

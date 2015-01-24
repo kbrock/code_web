@@ -37,44 +37,55 @@ table, td, th { border:1px solid black;  }
 <body>
 <%- methods_by_name.each do |methods| -%>
   <h2><%=methods.name%></h2>
-  <%- methods.group_by(:method_types).each do |methods_with_type| -%>
-    <%- if methods_with_type.hash_args? -%>
-      <%- display_yield_column = methods_with_type.detect(&:yields?) -%>
-      <table>
-      <thead><tr>
-        <%- methods_with_type.arg_keys.each do |arg| -%>
-          <td><%=arg%></td>
-        <%- end -%>
-        <%- if display_yield_column -%>
-        <td>yield?</td>
-        <%- end -%>
-        <td>ref</td>
-      </tr></thead>
-      <tbody>
-      <%- methods_with_type.group_by(:signature, arg_regex).each do |methods_by_signature| -%>
-        <tr>
-        <%- methods_with_type.arg_keys.each do |arg| -%>
-          <td><%= simplified_argument(methods_by_signature.hash_arg[arg]) %></td>
-        <%- end -%>
-          <%- if display_yield_column -%>
-          <td><%= methods_by_signature.f.yields? %></td>
+  <%- methods.group_by(:hash_args?).each do |methods_with_hash| -%>
+    <%- if methods_with_hash.hash_args? -%>
+      <%- methods_with_hash.group_by(:method_types).each do |methods_with_type| -%>
+        <%- display_yield_column = methods_with_type.detect(&:yields?) -%>
+        <table>
+        <thead><tr>
+          <%- methods_with_type.arg_keys.each do |arg| -%>
+            <td><%=arg%></td>
           <%- end -%>
-          <td><% methods_by_signature.each_method_with_index do |method, i| %>
-              <%= method_link(method, i+1) %>
-          <% end %></td>
-        </tr>
+          <%- if display_yield_column -%>
+          <td>yield?</td>
+          <%- end -%>
+          <td>ref</td>
+        </tr></thead>
+        <tbody>
+        <%- methods_with_type.group_by(:signature, arg_regex).each do |methods_by_signature| -%>
+          <tr>
+          <%- methods_with_type.arg_keys.each do |arg| -%>
+            <td><%= simplified_argument(methods_by_signature.hash_arg[arg]) %></td>
+          <%- end -%>
+            <%- if display_yield_column -%>
+            <td><%= methods_by_signature.f.yields? %></td>
+            <%- end -%>
+            <td><%- methods_by_signature.each_method_with_index do |method, i| -%>
+                <%= method_link(method, i+1) %>
+            <%- end -%></td>
+          </tr>
+        <%- end -%>
+        </tbody>
+        </table>
+      <%- end -%>
+    <%- else -%>
+      <table>
+      <tbody>
+      <%- methods_with_hash.group_by(:method_types).each do |methods_with_type| -%>
+        <%- methods_with_type.group_by(:signature, nil, :small_signature).each do |methods_by_signature| -%>
+          <tr>
+            <td><%- methods_by_signature.each_method_with_index do |method, i| -%>
+                <%= method_link(method, i+1) %>
+            <%- end -%></td>
+          <%- methods_by_signature.f.args.each do |arg| -%>
+            <td><%= arg.inspect %></td>
+          <%- end -%>
+          </tr>
+        <%- end -%>
       <%- end -%>
       </tbody>
       </table>
-    <%- else -%>
-      <% methods_with_type.group_by(:signature).each do |methods_by_signature| %>
-        <%= methods_by_signature.each_method_with_index.map { |method, i|
-          txt = ( i > 0) ? (i+1) : nil
-          method_link(method, txt)
-        }.join(" ") + "</br>" %>
-      <%- end -%>
     <%- end -%>
-  <!-- /METHOD BY ARG TYPE -->
   <%- end -%>
 
 <%- end -%>
@@ -85,6 +96,11 @@ table, td, th { border:1px solid black;  }
     def report
       template = ERB.new(TEMPLATE, nil, "-")
       @out.puts template.result(binding)
+    rescue => e
+      e.backtrace.detect { |l| l =~ /\(erb\):([0-9]+)/ }
+      line_no=$1.to_i
+      raise RuntimeError, "error in #{__FILE__}:#{line_no+28} #{e}\n\n #{TEMPLATE.split(/\n/)[line_no-1]}\n\n ",
+        e.backtrace
     end
 
     # helpers
@@ -105,7 +121,11 @@ table, td, th { border:1px solid black;  }
       else
         arg.to_s[0..12]
       end
-      %{<span title="#{arg.to_s.gsub('"','&quot;')}">#{short_arg}</span>}
+      %{<span title="#{html_safe(arg)}">#{short_arg}</span>}
+    end
+
+    def html_safe(str)
+      str.to_s.gsub('"','&quot;')
     end
 
     # @param collection [Array<Method>] methods (with a hash first argument)

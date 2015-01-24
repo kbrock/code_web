@@ -121,8 +121,12 @@ module CodeWeb
           ast[1..-1].map {|node| collapse_ast(node)}
         when :lit, :lvar, :const, :str, :ivar, :cvar
           ast[1]
-        when :true, :false, :nil
-          ast[0]
+        when :true
+          true
+        when :false
+          false
+        when :nil
+          nil
         when :self
           ast[0]
         when :call

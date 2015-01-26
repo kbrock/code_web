@@ -60,7 +60,7 @@ table, td, th { border:1px solid black;  }
             <%- if display_yield_column -%>
             <td><%= methods_by_signature.f.yields? %></td>
             <%- end -%>
-            <td><%- methods_by_signature.each_method_with_index do |method, i| -%>
+            <td><%- methods_by_signature.each_with_index do |method, i| -%>
                 <%= method_link(method, i+1) %>
             <%- end -%></td>
           </tr>
@@ -74,7 +74,7 @@ table, td, th { border:1px solid black;  }
       <%- methods_with_hash.group_by(:method_types).each do |methods_with_type| -%>
         <%- methods_with_type.group_by(:signature, nil, :small_signature).each do |methods_by_signature| -%>
           <tr>
-            <td><%- methods_by_signature.each_method_with_index do |method, i| -%>
+            <td><%- methods_by_signature.each_with_index do |method, i| -%>
                 <%= method_link(method, i+1) %>
             <%- end -%></td>
           <%- methods_by_signature.f.args.each do |arg| -%>

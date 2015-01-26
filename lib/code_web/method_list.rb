@@ -1,5 +1,7 @@
+require 'forwardable'
 #collection of similar method calls
 class MethodList
+  extend Forwardable
   include Enumerable
 
   # what was used in the group by
@@ -33,6 +35,9 @@ class MethodList
     collection.first
   end
 
+  delegate [:detect, :each_with_index, :count] => :collection
+  delegate [:args_size, :hash_arg, :hash_args?, :count] => :f
+
   def detect(&block)
     collection.detect(&block)
   end
@@ -43,41 +48,12 @@ class MethodList
     end
   end
 
-  def each_with_index(&block)
-    collection.each_with_index(&block)
-  end
-
-  def each_method_with_index(&block)
-    collection.each_with_index(&block)
-  end
-
-  def count
-    collection.count
-  end
-
   def single?
     count == 0
   end
 
-  # specific to the report
-  def hash_arg
-    @hash ||= f.hash_arg
-  end
-
-  def hash_args?
-    f.hash_args?
-  end
-
-  def args_size
-    f.args_size
-  end
-
   def arg_keys
     @arg_keys ||= collection.inject(Set.new) {|acc, m| m.arg_keys.each {|k| acc << k} ; acc}.sort_by {|n| n}
-  end
-
-  def arg_value(key)
-    hash_arg[key]
   end
 
   def self.group_by(collection, name)

@@ -24,7 +24,7 @@ module CodeWeb
           end
           @out.puts method.signature if methods_with_signature.single?
           @out.puts
-          methods_with_signature.each_method_with_index do |method, i|
+          methods_with_signature.each_with_index do |method, i|
             if ! methods_with_signature.single?
               @out.puts
               @out.puts method.signature

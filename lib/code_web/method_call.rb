@@ -22,7 +22,7 @@ module CodeWeb
     end
 
     def args?
-      args.nil? || args.empty?
+      args && !args.empty?
     end
 
     def yields?

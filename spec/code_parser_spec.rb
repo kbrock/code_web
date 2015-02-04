@@ -6,7 +6,7 @@ describe CodeWeb::CodeParser do
 
   context "method call" do
     it 'should add a method' do
-      subject << MethodCall.new(nil, "puts", ['"x"'], false )
+      subject << CodeWeb::MethodCall.new(nil, "puts", ['"x"'], false )
       expect(method_calls('puts')).to eq([
         meth('puts',['"x"'])
       ])

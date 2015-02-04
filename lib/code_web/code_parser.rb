@@ -2,6 +2,7 @@ require 'ruby_parser'
 
 module CodeWeb
   class CodeParser
+    extend Forwardable
     SPACES = Hash.new {|h, n| h[n] = "  " * n.to_i }
 
     attr_accessor :method_cache
@@ -11,10 +12,7 @@ module CodeWeb
     attr_accessor :verbose
     def verbose? ; @verbose ; end
     def debug? ; @debug ; end
-    def method_regex=(regex) ; @method_cache.method_regex= regex ; end
-    def arg_regex=(regex) ; @method_cache.arg_regex= regex ; end
-    def arg_regex ; @method_cache.arg_regex ; end
-    def method_calls ; @method_cache.method_calls ; end
+    def_delegators :@method_cache, :method_regex=, :arg_regex=, :arg_regex, :method_calls
 
     def initialize
       @cur_method=[]

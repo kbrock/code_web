@@ -49,10 +49,6 @@ module CodeWeb
       end
     end
 
-    def single?
-      f.count == 0
-    end
-
     def arg_keys
       @arg_keys ||= collection.inject(Set.new) {|acc, m| m.arg_keys.each {|k| acc << k} ; acc}.sort_by {|n| n}
     end

@@ -22,13 +22,9 @@ module CodeWeb
           else
             @out.puts " --> #{methods_with_signature.name}"
           end
-          @out.puts method.signature if methods_with_signature.single?
-          @out.puts
           methods_with_signature.each_with_index do |method, i|
-            if ! methods_with_signature.single?
-              @out.puts
-              @out.puts method.signature
-            end
+            @out.puts
+            @out.puts method.signature
             @out.puts "#{method.filename}:#{method.line}"
           end
           @out.puts

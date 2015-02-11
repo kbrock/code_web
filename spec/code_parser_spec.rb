@@ -233,19 +233,20 @@ describe CodeWeb::CodeParser do
 
   def method_calls(method_name=nil)
     if method_name
-      subject.method_calls[method_name] 
+      subject.method_calls.select { |mc| mc.full_method_name =~ /#{method_name}/ }
     else
       subject.method_calls
     end
   end
 
   def parse(body, require_string=nil)
-    test_method_name = caller[0].split('/').last.split(':')[0..1].join(':')
+    test_method_name = caller[0].split(':').first #[0..1].join(':')
     subject.parse(test_method_name, body, require_string)
   end
 
-  def meth(name, args=[], is_yield=false, source = nil)
+  def meth(name, args=[], is_yield=false, source = __FILE__)
+    name = [name.to_sym] if name.is_a?(String)
     args = [args] unless args.is_a?(Array)
-    CodeWeb::MethodCall.new(source, name, args, is_yield)
+    CodeWeb::MethodCall.new(source, 1, name, args, is_yield)
   end
 end

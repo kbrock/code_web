@@ -18,7 +18,7 @@ module CodeWeb
     def group_by(name, arg_regex=nil, sort_by = nil, &block)
       if block.nil?
         if arg_regex.nil?
-          block = Proc.new {|m| m.send(name)}
+          block = Proc.new { |m| m.send(name).to_s }
         else
           block = Proc.new {|m|
             if m.hash_args?

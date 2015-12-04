@@ -34,7 +34,7 @@ module CodeWeb
            :while, :until, :defined, :resbody, :match2, :match3, :dot2, :dot3,
            :dstr, :evstr, :dsym, :dregx, :hash, :array, :return, :and, :or,
            :next, :to_ary, :splat, :block_pass, :until, :yield,
-           /asgn/, :ivar, :arglist, :args, :zsuper, :not, #statements[]
+           /asgn/, :ivar, :arglist, :args, :kwarg, :kwargs, :kwsplat, :zsuper, :not, #statements[]
            :super, :xstr, :for, :until, :dxstr, 
       #these end up being no-ops:
            :lit, :lvar, :const, :str, :nil, :gvar, :back_ref,

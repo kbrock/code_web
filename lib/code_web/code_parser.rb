@@ -16,7 +16,6 @@ module CodeWeb
 
     def initialize
       @cur_method=[]
-      @parser = RubyParser.new
       @indent = 0
       @file_count = 0
       @exit_on_error = false
@@ -171,7 +170,7 @@ module CodeWeb
       begin
         if required_string.nil? || file_data.include?(required_string)
           in_context file_name do
-            traverse @parser.process file_data, file_name
+            traverse RubyParser.new.process(file_data, file_name)
           end
         end
         @file_count += 1

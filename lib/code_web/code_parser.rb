@@ -113,7 +113,11 @@ module CodeWeb
         end
         case ast.node_type
         when :hash #name, value, name, value, ...
-          Hash[*ast[1..-1].map {|i| collapse_ast(i)}]
+          if ast[1].is_a?(Sexp) && ast[1].node_type == :kwsplat
+            ast[1..-1].map { |i| collapse_ast(i) }
+          else
+            Hash[*ast[1..-1].map { |i| collapse_ast(i) }]
+          end
         when :array
           ast[1..-1].map {|node| collapse_ast(node)}
         when :lit, :lvar, :const, :str, :ivar, :cvar

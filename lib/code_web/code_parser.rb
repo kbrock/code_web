@@ -69,7 +69,11 @@ module CodeWeb
       else
         STDERR.puts "#{src}\n  unknown node: #{ast.node_type} #{collapse_ast(ast,1)}"
         if exit_on_error
-          binding.pry if defined?(Pry)
+          if defined?(Pry)
+            binding.pry
+          elsif defined?(Byebug)
+            byebug
+          end
           raise "error"
         end
         traverse_nodes(ast, 1..-1)

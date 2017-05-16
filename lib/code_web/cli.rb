@@ -63,6 +63,8 @@ module CodeWeb
         opt.on('-V', '--verbose',                   'verbose parsing')                            { |v| self.verbose = true}
         opt.on('-D', '--debug',                     'debug parsing')                              { |v| self.debug = true}
         opt.on('-p', '--pattern FILENAME_REGEX=COLOR','color to emphasize a file')                { |v| v = v.split('=') ; self.class_map[Regexp.new(v.first)] = v.last }
+        opt.on('--byebug') { require "byebug" }
+        opt.on('--pry') { require "pry" }
         opt.on_tail("-h", "--help", "Show this message")                                          { puts opt ; exit }
         opt.on_tail("-v", "--version", "Show version_information")                                { puts "Code Web version #{CodeWeb::VERSION}" ; exit }
         opt.parse!(arguments)

@@ -7,13 +7,17 @@ module CodeWeb
     attr_accessor :method_regex
     attr_accessor :arg_regex
 
-    def initialize(method_regex=//)
+    def initialize(method_regex = nil)
       @method_calls=[]
-      @method_regex = method_regex      
+      @method_regex = method_regex
     end
 
     def <<(mc)
-      @method_calls << mc if mc.full_method_name =~ method_regex &&
+      @method_calls << mc if detect?(mc)
+    end
+
+    def detect?(mc)
+      (method_regex.nil? || mc.full_method_name =~ method_regex) &&
         (
           arg_regex.nil? || (
             mc.hash_args? &&

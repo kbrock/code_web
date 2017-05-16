@@ -94,9 +94,9 @@ module CodeWeb
       method_name = method_name_from_ast(ast[1..2])
       args = ast[3..-1].map {|arg| collapse_ast(arg,1)}
 
-      method_cache << MethodCall.new(ast.file, ast.line, method_name, args, is_yield)
-
-      puts "#{spaces}#{method_name}(#{args.map{|arg|arg.inspect}.join(", ")})#{" do" if is_yield}" if debug?
+      mc = MethodCall.new(ast.file, ast.line, method_name, args, is_yield)
+      method_cache << mc
+      puts mc.to_s(spaces) if debug? # && method_cache.detect?(mc)
     end
 
     def method_name_from_ast(ast)

@@ -49,6 +49,10 @@ module CodeWeb
       Array(name).compact.join(".")
     end
 
+    def short_filename
+      filename.split("/").last if filename
+    end
+
     def sorted_args(hash=@args)
       hash.map {|arg| sorted_hash(arg) }.join(", ")
     end
@@ -85,6 +89,11 @@ module CodeWeb
         other.name == @name &&
         other.args == @args &&
         other.is_yielding == @is_yielding
+    end
+
+    # used by debugging (not sure if this should be signature)
+    def to_s(spaces = '')
+      "#{spaces}#{full_method_name}(#{args.map{|arg|arg.inspect}.join(", ")})#{" do" if is_yielding}"
     end
 
     private

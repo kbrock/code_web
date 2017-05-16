@@ -72,14 +72,18 @@ table, td, th { border:1px solid black;  }
       <table>
       <tbody>
       <%- methods_with_hash.group_by(:method_types).each do |methods_with_type| -%>
+        <%- display_yield_column = methods_with_type.detect(&:yields?) -%>
         <%- methods_with_type.group_by(:signature, nil, :small_signature).each do |methods_by_signature| -%>
           <tr>
-            <td><%- methods_by_signature.each_with_index do |method, i| -%>
-                <%= method_link(method, i+1) %>
-            <%- end -%></td>
           <%- methods_by_signature.f.args.each do |arg| -%>
             <td><%= arg.inspect %></td>
           <%- end -%>
+          <%- if display_yield_column -%>
+            <td><%= methods_by_signature.f.yields? ? 'yields' : 'no yield'%></td>
+          <%- end -%>
+            <td><%- methods_by_signature.each_with_index do |method, i| -%>
+                <%= method_link(method, i+1) %>
+            <%- end -%></td>
           </tr>
         <%- end -%>
       <%- end -%>

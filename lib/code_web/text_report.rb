@@ -5,11 +5,13 @@ module CodeWeb
     #   @return [Array<MethodCall>]
     attr_accessor :method_calls
     attr_accessor :arg_regex
+    attr_accessor :base_url
     def arg_regex? ; ! arg_regex.nil? ; end
 
-    def initialize(method_calls, class_map=nil, arg_regex=nil, out=STDOUT)
+    def initialize(method_calls, class_map=nil, arg_regex=nil, base_url=nil, out=STDOUT)
       @method_calls = method_calls
       @arg_regex = arg_regex
+      @base_url = base_url
       @out = out
     end
     

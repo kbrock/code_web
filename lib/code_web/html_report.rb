@@ -8,6 +8,7 @@ module CodeWeb
     #   @return [Array<MethodCall>]
     attr_accessor :method_calls
     attr_accessor :arg_regex
+    attr_accessor :base_url
     def arg_regex? ; ! arg_regex.nil? ; end
 
     # @!attribute :class_map [rw]
@@ -17,10 +18,11 @@ module CodeWeb
     #   @return [Map<Regexp,color>] regex expressing name of main file
     attr_accessor :class_map
 
-    def initialize(method_calls, class_map={}, arg_regex=nil, out=STDOUT)
+    def initialize(method_calls, class_map={}, arg_regex=nil, base_url=nil, out=STDOUT)
       @method_calls = method_calls
       @class_map = class_map
       @arg_regex = arg_regex
+      @base_url = base_url
       @out = out
     end
 
@@ -157,8 +159,17 @@ table, td, th { border:1px solid black;  }
           break
         end
       end
-      #NOTE: may want to CGI::escape(m.filename)
-      %{<a href="subl://open?url=file://#{m.filename}&amp;line=#{m.line}" title="#{html_safe(m.signature)}"#{" class=\"#{class_name}\"" if class_name}>#{name}</a>}
+      url = if base_url
+              "#{m.filename.gsub(pwd, base_url)}#L#{m.line}"
+            else
+              #NOTE: may want to CGI::escape(m.filename)
+              "subl://open?url=file://#{m.filename}&amp;line=#{m.line}"
+            end
+        %{<a href="#{url}" title="#{html_safe(m.signature)}"#{" class=\"#{class_name}\"" if class_name}>#{name}</a>}
+    end
+
+    def pwd
+      @pwd ||= `pwd`.chomp
     end
   end
 end

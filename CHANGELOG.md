@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.6] - 2017-06-13
+- filenames in output, but only show first one
+- added flag `--url` to link to github instead of local filesystem
+- removed empty spans in output when blank or all of text fits in screen
+- removed first blank line in report output
+
 ## [0.0.5] - 2017-05-16
 - added a changelog (sorry olivier)
 - fixed gem metadata
@@ -17,5 +23,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - added flags for byebug and pry to allow debugging of issues (sorry not more stable)
 
 
-[Unreleased]: https://github.com/kbrock/code_web/compare/v0.0.5...HEAD
+[Unreleased]: https://github.com/kbrock/code_web/compare/v0.0.6...HEAD
+[0.0.6]: https://github.com/kbrock/code_web/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/kbrock/code_web/compare/v0.0.4...v0.0.5

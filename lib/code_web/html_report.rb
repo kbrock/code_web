@@ -62,8 +62,10 @@ table, td, th { border:1px solid black;  }
             <td><%= methods_by_signature.f.yields? %></td>
             <%- end -%>
             <td>
-            <%- methods_by_signature.each_with_index do |method, i| -%>
-                <%= method_link(method, i+1) %>
+            <%- methods_by_signature.group_by(:filename).each do |methods_by_filename| -%>
+            <%- methods_by_filename.each_with_index do |method, i| -%>
+              <%= method_link(method, i == 0 ? nil : i+1) %>
+            <%- end -%>
             <%- end -%>
             </td>
           </tr>
@@ -85,8 +87,10 @@ table, td, th { border:1px solid black;  }
             <td><%= methods_by_signature.f.yields? ? 'yields' : 'no yield'%></td>
           <%- end -%>
             <td>
-            <%- methods_by_signature.each_with_index do |method, i| -%>
-              <%= method_link(method, i+1) %>
+            <%- methods_by_signature.group_by(:filename).each do |methods_by_filename| -%>
+            <%- methods_by_filename.each_with_index do |method, i| -%>
+              <%= method_link(method, i == 0 ? nil : i+1) %>
+            <%- end -%>
             <%- end -%>
             </td>
           </tr>
@@ -151,7 +155,7 @@ table, td, th { border:1px solid black;  }
     # add a class if the method is in a particular file
 
     def method_link(m, count=nil)
-      name = count ? "[#{count}]" : m.signature
+      name = count ? "[#{count}]" : m.short_filename
       class_name = nil
       class_map.each_with_index do |(pattern, color), i|
         if m.filename =~ pattern

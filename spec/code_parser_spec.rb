@@ -5,13 +5,6 @@ require 'spec_helper'
 describe CodeWeb::CodeParser do
 
   context "method call" do
-    it 'should add a method' do
-      subject << CodeWeb::MethodCall.new(nil, "puts", ['"x"'], false )
-      expect(method_calls('puts')).to eq([
-        meth('puts',['"x"'])
-      ])
-    end
-
     it 'should support basic method call' do
       parse %{puts}
       expect(method_calls('puts')).to eq([
@@ -22,7 +15,7 @@ describe CodeWeb::CodeParser do
     it 'should support method call with arguments' do
       parse %{puts "x", :y, true, false}
       expect(method_calls('puts')).to eq([
-        meth('puts',['"x"', :y, :true, :false])
+        meth('puts',['x', :y, true, false]) # may want x => '"x"'
       ])
     end
 
@@ -36,7 +29,7 @@ describe CodeWeb::CodeParser do
     it 'should support method call ob objects' do
       parse %{y.puts "x"}
       expect(method_calls('y.puts')).to eq([
-        meth('y.puts',['"x"'])
+        meth(['y', :puts],['x'])
       ])
     end
 

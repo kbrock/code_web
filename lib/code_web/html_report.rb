@@ -54,14 +54,16 @@ table, td, th { border:1px solid black;  }
         <%- methods_with_type.group_by(:signature, arg_regex).each do |methods_by_signature| -%>
           <tr>
           <%- methods_with_type.arg_keys.each do |arg| -%>
-            <td><%= simplified_argument(methods_by_signature.hash_arg[arg]) %></td>
+            <td><%= simplified_argument(methods_by_signature.hash_arg[arg]) if methods_by_signature.hash_arg.key?(arg) %></td>
           <%- end -%>
             <%- if display_yield_column -%>
             <td><%= methods_by_signature.f.yields? %></td>
             <%- end -%>
-            <td><%- methods_by_signature.each_with_index do |method, i| -%>
+            <td>
+            <%- methods_by_signature.each_with_index do |method, i| -%>
                 <%= method_link(method, i+1) %>
-            <%- end -%></td>
+            <%- end -%>
+            </td>
           </tr>
         <%- end -%>
         </tbody>
@@ -80,9 +82,11 @@ table, td, th { border:1px solid black;  }
           <%- if display_yield_column -%>
             <td><%= methods_by_signature.f.yields? ? 'yields' : 'no yield'%></td>
           <%- end -%>
-            <td><%- methods_by_signature.each_with_index do |method, i| -%>
-                <%= method_link(method, i+1) %>
-            <%- end -%></td>
+            <td>
+            <%- methods_by_signature.each_with_index do |method, i| -%>
+              <%= method_link(method, i+1) %>
+            <%- end -%>
+            </td>
           </tr>
         <%- end -%>
       <%- end -%>
@@ -118,13 +122,17 @@ table, td, th { border:1px solid black;  }
     def simplified_argument(arg)
       short_arg = case arg
       when nil
-        nil
+        "nil"
       when String
         arg.split("::").last[0..12]
       else
         arg.to_s[0..12]
       end
-      %{<span title="#{html_safe(arg)}">#{short_arg}</span>}
+      if short_arg == arg || short_arg == "nil"
+        short_arg
+      else
+        %{<span title="#{html_safe(arg)}">#{short_arg}</span>}
+      end
     end
 
     def html_safe(str)

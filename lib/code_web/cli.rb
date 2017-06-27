@@ -61,7 +61,7 @@ module CodeWeb
         opt.banner = "Usage: code_web regex [file_name ...]"
 #       opt.on('-n', '--requests=count',   Integer, "Number of requests (default: #{requests})")  { |v| options[:requests] = v }
         opt.on('-t', '--text',                      'Use text reports')                           { |v| self.report_generator = ::CodeWeb::TextReport }
-        opt.on('u',  '--url URL',                   'Base url (e.g.: https://github.com/miq/miq/blob/master)') { |v| self.base_url = v }
+        opt.on('-u', '--url URL',                   'Base url (e.g.: https://github.com/miq/miq/blob/master)') { |v| self.base_url = v }
         opt.on('-a', '--arg ARG_REGEX',             'Only files with hash argument')              { |v| self.arg_regex = Regexp.new(v) }
         opt.on('-o', '--output FILENAME',           'Output filename')                            { |v| self.output = (v == '-') ? STDOUT : File.new(v,'w') }
         opt.on('-e', '--error-out',                 'exit on unknown tags')                       { |v| self.exit_on_error = true}

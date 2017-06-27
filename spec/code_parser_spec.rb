@@ -34,18 +34,18 @@ describe CodeWeb::CodeParser do
     end
 
     #NOTE the chaining isn't perfect
-    it "should support method chaining" do
+    it "should support method chaining" do ##
       parse "x(a:5).y().z(5)"
       expect(method_calls('x')).to eq([
         meth('x', [{a:5}])
       ])
 
       expect(method_calls('x(...).y')).to eq([
-        meth('x(...).y')
+        meth(['x(...)', :y])
       ])
 
       expect(method_calls('x(...).y.z')).to eq([
-        meth('x(...).y.z',[5])
+        meth(['x(...).y', :z],[5])
       ])
     end
 
@@ -139,16 +139,20 @@ describe CodeWeb::CodeParser do
         meth('puts')
       ])
     end
-    it "should support constants" do
+    it "should support global constants" do
       parse %{
         ABC=puts
-        Class::ABC.runx
       }
       expect(method_calls('puts')).to eq([
         meth('puts')
       ])
-      expect(method_calls('Class.ABC.runx')).to eq([
-        meth('Class.ABC.runx')
+    end
+    it "supports class constants" do
+      parse %{
+        Class::ABC.runx
+      }
+      expect(method_calls('Class::ABC.runx')).to eq([
+        meth(["Class::ABC",:runx])
       ])
     end
   end

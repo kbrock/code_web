@@ -9,6 +9,7 @@ module CodeWeb
     attr_accessor :method_calls
     attr_accessor :arg_regex
     attr_accessor :base_url
+    attr_accessor :url_and_file
     def arg_regex? ; ! arg_regex.nil? ; end
 
     # @!attribute :class_map [rw]
@@ -18,11 +19,12 @@ module CodeWeb
     #   @return [Map<Regexp,color>] regex expressing name of main file
     attr_accessor :class_map
 
-    def initialize(method_calls, class_map={}, arg_regex=nil, base_url=nil, out=STDOUT)
+    def initialize(method_calls, class_map={}, arg_regex=nil, out=STDOUT, options = {})
       @method_calls = method_calls
       @class_map = class_map
       @arg_regex = arg_regex
-      @base_url = base_url
+      @base_url = options[:base_url]
+      @url_and_file = options[:url_and_file]
       @out = out
     end
 
@@ -44,30 +46,38 @@ table, td, th { border:1px solid black;  }
         <%- display_yield_column = methods_with_type.detect(&:yields?) -%>
         <table>
         <thead><tr>
-          <%- methods_with_type.arg_keys.each do |arg| -%>
-            <td><%=arg%></td>
-          <%- end -%>
-          <%- if display_yield_column -%>
+        <%- methods_with_type.arg_keys.each do |arg| -%>
+          <td><%=arg%></td>
+        <%- end -%>
+        <%- if display_yield_column -%>
           <td>yield?</td>
-          <%- end -%>
+        <%- end -%>
           <td>ref</td>
+        <%- if base_url -%>
+          <td>file ref</td>
+        <%- end -%>
         </tr></thead>
         <tbody>
         <%- methods_with_type.group_by(:signature, arg_regex).each do |methods_by_signature| -%>
           <tr>
           <%- methods_with_type.arg_keys.each do |arg| -%>
-            <td><%= simplified_argument(methods_by_signature.hash_arg[arg]) if methods_by_signature.hash_arg.key?(arg) %></td>
+            <td><%= maybe_simplified_argument(methods_by_signature.hash_arg, arg) %></td>
           <%- end -%>
-            <%- if display_yield_column -%>
+          <%- if display_yield_column -%>
             <td><%= methods_by_signature.f.yields? %></td>
-            <%- end -%>
+          <%- end -%>
             <td>
-            <%- methods_by_signature.group_by(:filename).each do |methods_by_filename| -%>
-            <%- methods_by_filename.each_with_index do |method, i| -%>
-              <%= method_link(method, i == 0 ? nil : i+1) %>
-            <%- end -%>
+            <%- method_links(methods_by_signature).each do |link| -%>
+              <%= link %>
             <%- end -%>
             </td>
+          <%- if base_url -%>
+            <td>
+            <%- method_links(methods_by_signature, true).each do |link| -%>
+              <%= link %>
+            <%- end -%>
+            </td>
+          <%- end -%>
           </tr>
         <%- end -%>
         </tbody>
@@ -87,12 +97,17 @@ table, td, th { border:1px solid black;  }
             <td><%= methods_by_signature.f.yields? ? 'yields' : 'no yield'%></td>
           <%- end -%>
             <td>
-            <%- methods_by_signature.group_by(:filename).each do |methods_by_filename| -%>
-            <%- methods_by_filename.each_with_index do |method, i| -%>
-              <%= method_link(method, i == 0 ? nil : i+1) %>
-            <%- end -%>
+            <%- method_links(methods_by_signature).each do |link| -%>
+              <%= link %>
             <%- end -%>
             </td>
+          <%- if base_url && url_and_file -%>
+            <td>
+            <%- method_links(methods_by_signature, true).each do |link| -%>
+              <%= link %>
+            <%- end -%>
+            </td>
+          <%- end -%>
           </tr>
         <%- end -%>
       <%- end -%>
@@ -124,6 +139,10 @@ table, td, th { border:1px solid black;  }
 
     private
 
+    def maybe_simplified_argument(hash, arg)
+      simplified_argument(hash[arg]) if hash.key?(arg)
+    end
+
     # shorten the argument
     def simplified_argument(arg)
       short_arg = case arg
@@ -151,25 +170,37 @@ table, td, th { border:1px solid black;  }
       collection.inject(Set.new) {|acc, m| m.arg_keys.each {|k| acc << k} ; acc}.sort_by {|n| n}
     end
 
+    def method_links(methods_by_signature, force_filename = false)
+      methods_by_signature.group_by(:filename).flat_map do |methods_by_filename|
+        methods_by_filename.each_with_index.map do |method, i|
+          method_link(method, (i > 0 || force_filename) ? i+1 : nil, force_filename)
+        end
+      end
+    end
+
     # create a link to a method
     # add a class if the method is in a particular file
 
-    def method_link(m, count=nil)
+    def method_link(m, count, force_filename = false)
       name = count ? "[#{count}]" : m.short_filename
-      class_name = nil
+      class_name = class_for_filename(m.filename)
+      url = url_for_filename(m.filename, m.line, force_filename)
+      %{<a href="#{url}" title="#{html_safe(m.signature)}"#{" class=\"#{class_name}\"" if class_name}>#{name}</a>}
+    end
+
+    def class_for_filename(filename)
       class_map.each_with_index do |(pattern, color), i|
-        if m.filename =~ pattern
-          class_name = "f#{i}"
-          break
-        end
+        return "f#{i}" if filename =~ pattern
       end
-      url = if base_url
-              "#{m.filename.gsub(pwd, base_url)}#L#{m.line}"
-            else
-              #NOTE: may want to CGI::escape(m.filename)
-              "subl://open?url=file://#{m.filename}&amp;line=#{m.line}"
-            end
-        %{<a href="#{url}" title="#{html_safe(m.signature)}"#{" class=\"#{class_name}\"" if class_name}>#{name}</a>}
+      nil
+    end
+
+    def url_for_filename(filename, line, force_filename = false)
+      if !force_filename && base_url
+        "#{filename.gsub(pwd, base_url)}#L#{line}"
+      else
+        "subl://open?url=file://#{filename}&amp;line=#{line}"
+      end
     end
 
     def pwd

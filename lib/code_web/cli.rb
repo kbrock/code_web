@@ -21,6 +21,10 @@ module CodeWeb
     #   defaults to local filesystem
     attr_accessor :base_url
 
+    # @attribute file_and_url [rw]
+    #   @return true if both url and file are displayed
+    attr_accessor :file_and_url
+
     # @attribute report_generator [rw]
     #   @return class that runs the report (i.e.: TextReport, HtmlReport) 
     attr_accessor :report_generator
@@ -62,6 +66,7 @@ module CodeWeb
 #       opt.on('-n', '--requests=count',   Integer, "Number of requests (default: #{requests})")  { |v| options[:requests] = v }
         opt.on('-t', '--text',                      'Use text reports')                           { |v| self.report_generator = ::CodeWeb::TextReport }
         opt.on('-u', '--url URL',                   'Base url (e.g.: https://github.com/miq/miq/blob/master)') { |v| self.base_url = v }
+        opt.on('-b', '--both',                      'Show file and url references')               { |v| self.file_and_url = v }
         opt.on('-a', '--arg ARG_REGEX',             'Only files with hash argument')              { |v| self.arg_regex = Regexp.new(v) }
         opt.on('-o', '--output FILENAME',           'Output filename')                            { |v| self.output = (v == '-') ? STDOUT : File.new(v,'w') }
         opt.on('-e', '--error-out',                 'exit on unknown tags')                       { |v| self.exit_on_error = true}

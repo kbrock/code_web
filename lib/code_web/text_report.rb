@@ -8,10 +8,11 @@ module CodeWeb
     attr_accessor :base_url
     def arg_regex? ; ! arg_regex.nil? ; end
 
-    def initialize(method_calls, class_map=nil, arg_regex=nil, base_url=nil, out=STDOUT)
+    def initialize(method_calls, class_map={}, arg_regex=nil, out=STDOUT, options = {})
       @method_calls = method_calls
       @arg_regex = arg_regex
-      @base_url = base_url
+      @base_url = options[:base_url]
+      @url_and_file = options[:url_and_file]
       @out = out
     end
     

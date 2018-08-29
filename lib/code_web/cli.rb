@@ -105,7 +105,7 @@ module CodeWeb
 
     def display_results
       STDOUT.puts "parsed #{files_parsed} files"
-      report_generator.new(method_calls, class_map, arg_regex, base_url, output).report
+      report_generator.new(method_calls, class_map, arg_regex, output, :base_url => base_url).report
     end
   end
 end

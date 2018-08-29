@@ -1,7 +1,12 @@
 # CodeWeb
 
-This uses ruby parser to read code and find references.
+This uses ruby parser to read code with static analysis and find references.
 Works best when looking for finding static methods that possibly span multiple lines
+
+It is not smart enough to understand return types.
+
+For hashes/positional arguments, it displays the hash arguments.
+It only works when actual hash parameters are passed vs variables or splats.
 
 It generates an html file with the list of each method and the invocations.
 Each reference has a url to the place in code where it is found.
@@ -33,6 +38,14 @@ Or install it yourself as:
     # output the report to miq_queue.html (in html format)
 
     $ code_web -p 'miq_queue.rb$=#999' -p 'tools/=#ccc' 'MiqQueue\b' app tools lib -o miq_queue.html
+
+
+    # find calls to User.select
+    $ code_web 'User.select\b' lib -o user_select.html
+
+
+    # generate links pointing to github (instead of local sublime)
+    $ code_web --url https://github.com/ManageIQ/manageiq/blob/master --byebug 'MiqQueue' app lib/vmdb -o miq_queue.html
 
 ## Url handline
 
@@ -75,6 +88,7 @@ ret=`"#{SUBL_BIN_PATH}" "#{subl_file}"`
 exit 0 # the handler has finished successfully
 ```
 
+I left the debugging statements in there to help you if there are issues
 
 ## Contributing
 

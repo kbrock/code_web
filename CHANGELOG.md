@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.8] - 2018-08-28
+- fix html report output
+
 ## [0.0.7] - 2017-06-13
 - fix `-u` flag
 - added `--both` to show both github and local filesystem links
@@ -27,7 +30,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - added flags for byebug and pry to allow debugging of issues (sorry not more stable)
 
 
-[Unreleased]: https://github.com/kbrock/code_web/compare/v0.0.7...HEAD
+[Unreleased]: https://github.com/kbrock/code_web/compare/v0.0.8...HEAD
+[0.0.8]: https://github.com/kbrock/code_web/compare/v0.0.7...v0.0.8
 [0.0.7]: https://github.com/kbrock/code_web/compare/v0.0.6...v0.0.7
 [0.0.6]: https://github.com/kbrock/code_web/compare/v0.0.5...v0.0.6
 [0.0.5]: https://github.com/kbrock/code_web/compare/v0.0.4...v0.0.5

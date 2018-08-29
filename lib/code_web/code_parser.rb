@@ -63,7 +63,7 @@ module CodeWeb
         in_context 'yield', true do
           traverse_nodes(ast, 2..-1)
         end
-      when :call # object, statement? || const symbol, args
+      when :call, :safe_call # object, statement? || const symbol, args
         handle_method_call(ast, has_yield)
         traverse_nodes(ast, 1..-1)
       else

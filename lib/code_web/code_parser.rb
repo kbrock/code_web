@@ -29,7 +29,7 @@ module CodeWeb
       #dstr = define string ("abc#{here}"),
       #evstr evaluate string (#{HERE})
       #attrasgn = attribute assignment
-      when :block, :if, :ensure, :rescue, :case, :when, :begin,
+      when :block, :lambda, :if, :ensure, :rescue, :case, :when, :begin,
            :while, :until, :defined, :resbody, :match2, :match3, :dot2, :dot3,
            :dstr, :evstr, :dsym, :dregx, :hash, :array, :return, :and, :or,
            :next, :to_ary, :splat, :block_pass, :until, :yield,

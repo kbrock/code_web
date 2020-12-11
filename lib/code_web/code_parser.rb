@@ -117,7 +117,7 @@ module CodeWeb
         end
         case ast.node_type
         when :hash #name, value, name, value, ...
-          if ast[1].is_a?(Sexp) && ast[1].node_type == :kwsplat
+          if ast[1].is_a?(Sexp) && (ast[1].node_type == :kwsplat|| ast[1].node_type == :lit)
             ast[1..-1].map { |i| collapse_ast(i) }
           else
             Hash[*ast[1..-1].map { |i| collapse_ast(i) }]
@@ -183,6 +183,11 @@ module CodeWeb
         end
         @file_count += 1
       rescue => e
+        if defined?(Pry)
+          binding.pry
+        elsif defined?(Byebug)
+          byebug
+        end
         STDERR.puts("#{e}: [#{file_data.size}] #{file_name}")
       end
     end

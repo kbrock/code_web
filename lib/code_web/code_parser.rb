@@ -34,9 +34,9 @@ module CodeWeb
            :dstr, :evstr, :dsym, :dregx, :hash, :array, :return, :and, :or,
            :next, :to_ary, :splat, :block_pass, :until, :yield,
            /asgn/, :ivar, :arglist, :args, :kwarg, :kwargs, :kwsplat, :zsuper, :not, #statements[]
-           :super, :xstr, :for, :until, :dxstr, 
+           :super, :xstr, :for, :until, :dxstr, :lit,
       #these end up being no-ops:
-           :lit, :lvar, :const, :str, :nil, :gvar, :back_ref,
+           :lvar, :const, :str, :nil, :gvar, :back_ref,
            :true, :false, :colon2, :colon3, :next, :alias,
            :nth_ref, :sclass, :cvdecl, :break, :retry, :undef,
       #random
@@ -117,7 +117,7 @@ module CodeWeb
         end
         case ast.node_type
         when :hash #name, value, name, value, ...
-          if ast[1].is_a?(Sexp) && (ast[1].node_type == :kwsplat|| ast[1].node_type == :lit)
+          if ast[1].is_a?(Sexp) && (ast[1].node_type == :kwsplat || ast[1].node_type == :lit)
             ast[1..-1].map { |i| collapse_ast(i) }
           else
             Hash[*ast[1..-1].map { |i| collapse_ast(i) }]

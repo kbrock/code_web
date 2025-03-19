@@ -90,7 +90,7 @@ module CodeWeb
        
     def parse_files
       filenames.each do |arg|
-        arg = "#{arg}/**/*.rb" if Dir.exists?(arg)
+        arg = "#{arg}/**/*.rb" if Dir.exist?(arg)
         if File.exist?(arg)
           puts arg if debug?
           code_parser.parse arg

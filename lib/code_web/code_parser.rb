@@ -25,7 +25,8 @@ module CodeWeb
     def traverse(ast, has_yield=false)
       puts "#{spaces}||#{collapse_ast(ast,1)}||" if verbose?
       puts src if ast.nil?
-      case ast.node_type
+      #case ast.node_type
+      case ast.first
       #dstr = define string ("abc#{here}"),
       #evstr evaluate string (#{HERE})
       #attrasgn = attribute assignment
@@ -67,7 +68,8 @@ module CodeWeb
         handle_method_call(ast, has_yield)
         traverse_nodes(ast, 1..-1)
       else
-        STDERR.puts "#{src}\n  unknown node: #{ast.node_type} #{collapse_ast(ast,1)}"
+#        STDERR.puts "#{src}\n  unknown node: #{ast.node_type} #{collapse_ast(ast,1)}"
+        STDERR.puts "#{src}\n  unknown node: #{ast.first} #{collapse_ast(ast,1)}"
         if exit_on_error
           if defined?(Pry)
             binding.pry
@@ -115,9 +117,12 @@ module CodeWeb
         else
           ast = ast.gsub(Sexp.new(:call, Sexp.new(:self),:class), Sexp.new(:const, self_name))
         end
-        case ast.node_type
+        #case ast.node_type
+        case ast.first
         when :hash #name, value, name, value, ...
-          if ast[1].is_a?(Sexp) && (ast[1].node_type == :kwsplat || ast[1].node_type == :lit)
+          #if ast[1].is_a?(Sexp) && (ast[1].node_type == :kwsplat || ast[1].node_type == :lit)
+
+          if ast[1].is_a?(Sexp) && (ast[1].first == :kwsplat)
             ast[1..-1].map { |i| collapse_ast(i) }
           else
             Hash[*ast[1..-1].map { |i| collapse_ast(i) }]
@@ -157,7 +162,8 @@ module CodeWeb
           if max > 0
             ast.map {|node| collapse_ast(node, max-1)}
           else
-            "#{ast.node_type}[]"
+            # "#{ast.node_type}[]"
+            "#{ast.first}[]"
           end
         end
       elsif ast.nil?
@@ -189,6 +195,7 @@ module CodeWeb
           byebug
         end
         STDERR.puts("#{e}: [#{file_data.size}] #{file_name}")
+        raise if exit_on_error
       end
     end
 

@@ -122,7 +122,7 @@ table, td, th { border:1px solid black;  }
 }
 
     def report
-      template = ERB.new(TEMPLATE, nil, "-")
+      template = ERB.new(TEMPLATE, trim_mode: "-")
       @out.puts template.result(binding)
     rescue => e
       e.backtrace.detect { |l| l =~ /\(erb\):([0-9]+)/ }

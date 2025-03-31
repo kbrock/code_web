@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+load_path = File.expand_path("../lib", __dir__)
+$LOAD_PATH.unshift(load_path) unless $LOAD_PATH.include?(load_path)
+
 require 'code_web'
 require 'code_web/cli'
 
